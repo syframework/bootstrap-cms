@@ -32,7 +32,7 @@ CREATE TABLE `t_content_history` (
   `css` text NOT NULL,
   `js` text NOT NULL,
   `updator_id` int UNSIGNED NULL,
-  `updated_at` datetime NOT NU
+  `updated_at` datetime NOT NULL,
   PRIMARY KEY (`id`, `lang`, `crc32`),
   FOREIGN KEY (`updator_id`) REFERENCES `t_user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   FOREIGN KEY (`id`, `lang`) REFERENCES `t_content` (`id`, `lang`) ON DELETE CASCADE ON UPDATE CASCADE
