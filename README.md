@@ -40,7 +40,7 @@ public function contentAction() {
 	}
 
 	$this->setContentVars([
-		'CONTENT' => new \Sy\Bootstrap\Component\Content($id, $lang),
+		'CONTENT' => new \Sy\Bootstrap\Component\Cms\Content($id, $lang),
 	]);
 }
 ```
