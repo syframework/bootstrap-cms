@@ -32,11 +32,16 @@ CREATE TABLE `t_content_history` (
   `css` text NOT NULL,
   `js` text NOT NULL,
   `updator_id` int UNSIGNED NULL,
-  `updated_at` datetime NOT NULL,
+  `updated_at` datetime NOT NU
   PRIMARY KEY (`id`, `lang`, `crc32`),
   FOREIGN KEY (`updator_id`) REFERENCES `t_user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   FOREIGN KEY (`id`, `lang`) REFERENCES `t_content` (`id`, `lang`) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+-- ----------------------------
+-- Records of t_page
+-- ----------------------------
+INSERT INTO `t_page` (id, title) VALUES ('content', 'Content');
 
 -- ----------------------------
 -- Records of t_user_permission
