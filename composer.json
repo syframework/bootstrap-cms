@@ -1,0 +1,21 @@
+{
+	"name": "sy/bootstrap-cms",
+	"description": "Plugin for adding CMS feature",
+	"type": "library",
+	"require": {
+		"php": ">=7",
+		"sy/bootstrap": "dev-develop"
+	},
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Syone",
+			"email": "syone7@gmail.com"
+		}
+	],
+	"autoload": {
+		"psr-4": {
+			"Sy\\Bootstrap\\": "src/"
+		}
+	}
+}
