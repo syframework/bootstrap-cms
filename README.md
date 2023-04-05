@@ -61,7 +61,7 @@ class Application extends \Sy\Bootstrap\Application {
 
 	protected function initUrlConverter() {
 		Url\AliasManager::setAliasFile(__DIR__ . '/../conf/alias.php');
-		Url::addConverter(new Lib\Url\ContentConverter()); // Add the content URL converter
+		Url::addConverter(new Url\ContentConverter()); // Add the content URL converter
 		Url::addConverter(new Url\AliasConverter());
 		Url::addConverter(new Url\ControllerActionConverter());
 	}
