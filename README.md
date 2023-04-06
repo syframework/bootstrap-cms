@@ -23,26 +23,25 @@ Copy template files into your project templates directory: ```protected/template
 ## Page methods
 
 ```php
-/**
- * Content page
- */
-public function contentAction() {
-	$service = \Project\Service\Container::getInstance();
+	/**
+	 * Content page
+	 */
+	public function contentAction() {
+		$service = \Project\Service\Container::getInstance();
 
-	$id   = $this->get('id', 1);
-	$lang = $this->get('lang', $service->lang->getLang());
+		$id = $this->get('id', 1);
 
-	// Retrieve content
-	$content = $service->content->retrieve(['id' => $id, 'lang' => $lang]);
+		// Retrieve content
+		$content = $service->content->retrieve(['id' => $id]);
 
-	if (empty($content)) {
-		throw new \Sy\Bootstrap\Application\Page\NotFoundException();
+		if (empty($content)) {
+			throw new \Sy\Bootstrap\Application\Page\NotFoundException();
+		}
+
+		$this->setContentVars([
+			'CONTENT' => new \Sy\Bootstrap\Component\Cms\Content($id),
+		]);
 	}
-
-	$this->setContentVars([
-		'CONTENT' => new \Sy\Bootstrap\Component\Cms\Content($id, $lang),
-	]);
-}
 ```
 
 ## Language files

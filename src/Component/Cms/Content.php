@@ -57,18 +57,18 @@ class Content extends \Sy\Component\WebComponent {
 		if ($service->user->getCurrentUser()->hasPermission('content-update-inline')) {
 			$this->addJsLink(CKEDITOR_JS);
 			$js->setVars([
-				'ID'              => $content['id'],
-				'CSRF'            => $service->user->getCsrfToken(),
-				'URL'             => Url::build('api', 'content'),
-				'WEB_ROOT'        => WEB_ROOT,
-				'IMG_BROWSE'      => Url::build('editor', 'browse', ['id' => $this->id, 'item' => 'content', 'type' => 'image']),
-				'IMG_UPLOAD'      => Url::build('editor', 'upload', ['id' => $this->id, 'item' => 'content', 'type' => 'image']),
-				'FILE_BROWSE'     => Url::build('editor', 'browse', ['id' => $this->id, 'item' => 'content', 'type' => 'file']),
-				'FILE_UPLOAD'     => Url::build('editor', 'upload', ['id' => $this->id, 'item' => 'content', 'type' => 'file']),
-				'IMG_UPLOAD_AJAX' => Url::build('editor', 'upload', ['id' => $this->id, 'item' => 'content', 'type' => 'image', 'json' => '']),
-				'FILE_UPLOAD_AJAX' => Url::build('editor', 'upload', ['id' => $this->id, 'item' => 'content', 'type' => 'file', 'json' => '']),
-				'CKEDITOR_ROOT'   => CKEDITOR_ROOT,
-				'GET_URL'         => Url::build('api', 'content', ['id' => $this->id]),
+				'ID'               => $content['id'],
+				'CSRF'             => $service->user->getCsrfToken(),
+				'URL'              => Url::build('api', 'content'),
+				'WEB_ROOT'         => WEB_ROOT,
+				'IMG_BROWSE'       => Url::build('editor', 'content/browse', ['id' => $this->id, 'type' => 'image']),
+				'IMG_UPLOAD'       => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'image']),
+				'FILE_BROWSE'      => Url::build('editor', 'content/browse', ['id' => $this->id, 'type' => 'file']),
+				'FILE_UPLOAD'      => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'file']),
+				'IMG_UPLOAD_AJAX'  => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'image', 'json' => '']),
+				'FILE_UPLOAD_AJAX' => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'file', 'json' => '']),
+				'CKEDITOR_ROOT'    => CKEDITOR_ROOT,
+				'GET_URL'          => Url::build('api', 'content', ['id' => $this->id]),
 			]);
 			$js->setBlock('UPDATE_BLOCK');
 			$this->setBlock('UPDATE_INLINE_BTN_BLOCK');

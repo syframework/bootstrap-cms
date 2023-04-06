@@ -79,6 +79,7 @@ $(function() {
 				$('#sy-content').attr('contenteditable', true);
 				if (!CKEDITOR.instances['sy-content']) {
 					var editor = CKEDITOR.inline('sy-content', {
+						entities: false,
 						title: false,
 						startupFocus: true,
 						linkShowAdvancedTab: false,
