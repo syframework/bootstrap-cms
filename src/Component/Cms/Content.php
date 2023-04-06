@@ -81,8 +81,8 @@ class Content extends \Sy\Component\WebComponent {
 			$this->setBlock('UPDATE_MODAL_BLOCK');
 		}
 
-		// Delete
-		if ($service->user->getCurrentUser()->hasPermission('content-delete')) {
+		// Delete: the first content cannot be deleted
+		if ($service->user->getCurrentUser()->hasPermission('content-delete') and $this->id > 1) {
 			$deleteForm = new \Sy\Bootstrap\Component\Form\Crud\Delete('content', ['id' => $this->id]);
 			$deleteForm->setAttribute('id', 'delete-' . $this->id);
 			$this->setComponent('DELETE_PAGE_FORM', $deleteForm);
