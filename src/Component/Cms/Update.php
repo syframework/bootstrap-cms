@@ -10,15 +10,9 @@ class Update extends \Sy\Bootstrap\Component\Form\Crud {
 	 */
 	private $id;
 
-	/**
-	 * @var string
-	 */
-	private $lang;
-
-	public function __construct($id, $lang) {
+	public function __construct($id) {
 		$this->id = $id;
-		$this->lang = $lang;
-		parent::__construct('content', ['id' => $id, 'lang' => $lang]);
+		parent::__construct('content', ['id' => $id]);
 	}
 
 	public function init() {
@@ -42,7 +36,7 @@ class Update extends \Sy\Bootstrap\Component\Form\Crud {
 		try {
 			$this->validatePost();
 			$this->updateRow();
-			$this->setSuccess($this->_('Saved'), Url::build('page', 'content', ['id' => $this->id, 'lang' => $this->lang]));
+			$this->setSuccess($this->_('Saved'), Url::build('page', 'content', ['id' => $this->id]));
 		} catch (\Sy\Component\Html\Form\Exception $e) {
 			$this->logWarning($e);
 			if (is_null($this->getOption('error'))) {

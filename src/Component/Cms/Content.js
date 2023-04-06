@@ -53,7 +53,6 @@ $(function() {
 	function save(reload) {
 		$.post("{URL}", {
 			id: "{ID}",
-			lang: "{LANG}",
 			csrf: csrf,
 			content: CKEDITOR.instances['sy-content'].getData()
 		}, function(res) {

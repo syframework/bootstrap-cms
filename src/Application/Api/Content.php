@@ -4,6 +4,10 @@ namespace Sy\Bootstrap\Application\Api;
 class Content extends \Sy\Bootstrap\Component\Api {
 
 	public function security() {
+		if (is_null($this->request('id'))) {
+			throw new \Sy\Bootstrap\Component\Api\RequestErrorException('Missing page content id');
+		}
+
 		$service = \Project\Service\Container::getInstance();
 		if (!$service->user->getCurrentUser()->hasPermission('content-update')) {
 			throw new \Sy\Bootstrap\Component\Api\ForbiddenException('Permission denied');
@@ -16,23 +20,25 @@ class Content extends \Sy\Bootstrap\Component\Api {
 	 * @return void
 	 */
 	public function getAction() {
-		$id   = $this->get('id');
-		$lang = $this->get('lang');
-		if (is_null($id) or is_null($lang)) {
-			return $this->requestError();
+		$id = $this->get('id');
+		if (is_null($id)) {
+			return $this->requestError([
+				'status'  => 'ko',
+				'message' => 'Missing id parameter',
+			]);
 		}
 		$service = \Project\Service\Container::getInstance();
-		$content = $service->content->retrieve(['id' => $id, 'lang' => $lang]);
+		$content = $service->content->retrieve(['id' => $id]);
 
 		if (empty($content)) {
-			return $this->requestError([
-				'status' => 'ko',
+			return $this->notFound([
+				'status'  => 'ko',
 				'message' => 'Content not found',
 			]);
 		}
 
 		return $this->ok([
-			'status' => 'ok',
+			'status'  => 'ok',
 			'content' => $content['html'],
 		]);
 	}
@@ -47,7 +53,6 @@ class Content extends \Sy\Bootstrap\Component\Api {
 		try {
 			// Update page
 			$id      = $this->post('id');
-			$lang    = $this->post('lang');
 			$content = $this->post('content');
 			$csrf    = $this->post('csrf');
 			if ($csrf !== $service->user->getCsrfToken()) {
@@ -57,7 +62,12 @@ class Content extends \Sy\Bootstrap\Component\Api {
 					'csrf'    => $service->user->getCsrfToken(),
 				]);
 			}
-			if (is_null($id) or is_null($lang) or is_null($content)) $this->requestError();
+			if (is_null($id) or is_null($content)) {
+				return $this->requestError([
+					'status'  => 'ko',
+					'message' => 'Missing id or content parameter',
+				]);
+			}
 
 			// TODO: Save a version in t_page_history
 			// $service->pageHistory->change([
@@ -71,7 +81,7 @@ class Content extends \Sy\Bootstrap\Component\Api {
 			// ]);
 
 			// Save content
-			$service->content->update(['id' => $id, 'lang' => $lang], ['html' => $content]);
+			$service->content->update(['id' => $id], ['html' => $content]);
 			return $this->ok(['status' => 'ok']);
 		} catch (\Sy\Db\MySql\Exception $e) {
 			return $this->serverError([

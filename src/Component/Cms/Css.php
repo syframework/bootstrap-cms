@@ -5,11 +5,8 @@ class Css extends \Sy\Bootstrap\Component\Form {
 
 	private $id;
 
-	private $lang;
-
-	public function __construct($id, $lang) {
+	public function __construct($id) {
 		$this->id = $id;
-		$this->lang = $lang;
 		parent::__construct();
 	}
 
@@ -28,14 +25,10 @@ class Css extends \Sy\Bootstrap\Component\Form {
 
 		// Load scss
 		$service = \Project\Service\Container::getInstance();
-		$content = $service->content->retrieve(['id' => $this->id, 'lang' => $this->lang]);
+		$content = $service->content->retrieve(['id' => $this->id]);
 
 		if (!empty($content)) {
 			$codeArea->addText($content['scss']);
-		}
-
-		if (file_exists(TPL_DIR . "/Application/Page/css/$this->id.scss")) {
-			$codeArea->addText(file_get_contents(TPL_DIR . "/Application/Page/css/$this->id.scss"));
 		}
 
 		$this->addElement($codeArea);

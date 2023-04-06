@@ -5,11 +5,8 @@ class Js extends \Sy\Bootstrap\Component\Form {
 
 	private $id;
 
-	private $lang;
-
-	public function __construct($id, $lang) {
+	public function __construct($id) {
 		$this->id = $id;
-		$this->lang = $lang;
 		parent::__construct();
 	}
 
@@ -28,7 +25,7 @@ class Js extends \Sy\Bootstrap\Component\Form {
 
 		// Load js
 		$service = \Project\Service\Container::getInstance();
-		$content = $service->content->retrieve(['id' => $this->id, 'lang' => $this->lang]);
+		$content = $service->content->retrieve(['id' => $this->id]);
 		if (!empty($content)) {
 			$codeArea->addText($content['js']);
 		}

@@ -12,22 +12,16 @@ class Content extends \Sy\Component\WebComponent {
 	 */
 	private $id;
 
-	/**
-	 * @var string
-	 */
-	private $lang;
-
-	public function __construct(int $id, string $lang) {
-		$this->id   = $id;
-		$this->lang = $lang;
+	public function __construct(int $id) {
+		$this->id = $id;
 
 		$service = \Project\Service\Container::getInstance();
-		$content = $service->content->retrieve(['id' => $id, 'lang' => $lang]);
+		$content = $service->content->retrieve(['id' => $id]);
 
 		// Set meta title, description and canonical
 		HeadData::setTitle(Str::escape($content['title']));
 		HeadData::setDescription(Str::escape($content['description']));
-		HeadData::setCanonical(PROJECT_URL . Url::build('page', 'content', ['id' => $id, 'lang' => $lang]));
+		HeadData::setCanonical(PROJECT_URL . Url::build('page', 'content', ['id' => $id]));
 
 		$this->mount(function () {
 			$this->init();
@@ -38,9 +32,13 @@ class Content extends \Sy\Component\WebComponent {
 		$this->setTemplateFile(__DIR__ . '/Content.html');
 
 		$service = \Project\Service\Container::getInstance();
-		$content = $service->content->retrieve(['id' => $this->id, 'lang' => $this->lang]);
+		$content = $service->content->retrieve(['id' => $this->id]);
 
-		$this->setVar('HTML', $content['html']);
+		// TODO: maybe use a specific lang directory for CMS content
+		$html = new \Sy\Component();
+		$html->addTranslator(LANG_DIR);
+		$html->setTemplateContent($content['html']);
+		$this->setVar('HTML', Str::convertTemplateSlot(strval($html)));
 
 		// Create
 		if ($service->user->getCurrentUser()->hasPermission('content-create')) {
@@ -60,7 +58,6 @@ class Content extends \Sy\Component\WebComponent {
 			$this->addJsLink(CKEDITOR_JS);
 			$js->setVars([
 				'ID'              => $content['id'],
-				'LANG'            => $this->lang,
 				'CSRF'            => $service->user->getCsrfToken(),
 				'URL'             => Url::build('api', 'content'),
 				'WEB_ROOT'        => WEB_ROOT,
@@ -71,7 +68,7 @@ class Content extends \Sy\Component\WebComponent {
 				'IMG_UPLOAD_AJAX' => Url::build('editor', 'upload', ['id' => $this->id, 'item' => 'content', 'type' => 'image', 'json' => '']),
 				'FILE_UPLOAD_AJAX' => Url::build('editor', 'upload', ['id' => $this->id, 'item' => 'content', 'type' => 'file', 'json' => '']),
 				'CKEDITOR_ROOT'   => CKEDITOR_ROOT,
-				'GET_URL'         => Url::build('api', 'content', ['id' => $this->id, 'lang' => $this->lang]),
+				'GET_URL'         => Url::build('api', 'content', ['id' => $this->id]),
 			]);
 			$js->setBlock('UPDATE_BLOCK');
 			$this->setBlock('UPDATE_INLINE_BTN_BLOCK');
@@ -79,14 +76,14 @@ class Content extends \Sy\Component\WebComponent {
 
 		// Update
 		if ($service->user->getCurrentUser()->hasPermission('content-update')) {
-			$this->setComponent('UPDATE_PAGE_FORM', new Update($this->id, $this->lang));
+			$this->setComponent('UPDATE_PAGE_FORM', new Update($this->id));
 			$this->setBlock('UPDATE_BTN_BLOCK');
 			$this->setBlock('UPDATE_MODAL_BLOCK');
 		}
 
 		// Delete
 		if ($service->user->getCurrentUser()->hasPermission('content-delete')) {
-			$deleteForm = new \Sy\Bootstrap\Component\Form\Crud\Delete('content', ['id' => $this->id, 'lang' => $this->lang]);
+			$deleteForm = new \Sy\Bootstrap\Component\Form\Crud\Delete('content', ['id' => $this->id]);
 			$deleteForm->setAttribute('id', 'delete-' . $this->id);
 			$this->setComponent('DELETE_PAGE_FORM', $deleteForm);
 			$this->setBlock('DELETE_BTN_BLOCK');
@@ -100,19 +97,19 @@ class Content extends \Sy\Component\WebComponent {
 		// Code
 		if ($service->user->getCurrentUser()->hasPermission('content-code')) {
 			// HTML Code
-			$this->setComponent('HTML_FORM', new Html($this->id, $this->lang));
+			$this->setComponent('HTML_FORM', new Html($this->id));
 			$this->setVar('FORM_HTML_ID', 'form_html_' . $this->id);
 			$js->setVars([
 				'CM_HTML_ID' => 'codearea_html_' . $this->id,
 			]);
 
 			// CSS Code
-			$this->setComponent('CSS_FORM', new Css($this->id, $this->lang));
+			$this->setComponent('CSS_FORM', new Css($this->id));
 			$this->setVar('FORM_CSS_ID', 'form_css_' . $this->id);
 			$js->setVar('CM_CSS_ID', 'codearea_css_' . $this->id);
 
 			// JS Code
-			$this->setComponent('JS_FORM', new Js($this->id, $this->lang));
+			$this->setComponent('JS_FORM', new Js($this->id));
 			$this->setVar('FORM_JS_ID', 'form_js_' . $this->id);
 			$js->setVar('CM_JS_ID', 'codearea_js_' . $this->id);
 

@@ -5,11 +5,8 @@ class Html extends \Sy\Bootstrap\Component\Form {
 
 	private $id;
 
-	private $lang;
-
-	public function __construct($id, $lang) {
+	public function __construct($id) {
 		$this->id = $id;
-		$this->lang = $lang;
 		parent::__construct();
 	}
 
@@ -43,7 +40,7 @@ class Html extends \Sy\Bootstrap\Component\Form {
 			// To do: transpile scss
 
 			// Save content
-			$service->content->update(['id' => $this->id, 'lang' => $this->lang], [
+			$service->content->update(['id' => $this->id], [
 				'html' => $this->post('html'),
 				'scss' => $this->post('css'),
 				'css'  => $this->post('css'),
