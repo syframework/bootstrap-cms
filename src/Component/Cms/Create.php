@@ -37,6 +37,9 @@ class Create extends \Sy\Bootstrap\Component\Form\Crud\Create {
 			$fields['css'] = ' ';
 			$fields['js'] = ' ';
 
+			$service = \Project\Service\Container::getInstance();
+			$fields['creator_id'] = $service->user->getCurrentUser()->id;
+
 			$id = $this->getService()->create($fields);
 			$this->setSuccess(
 				$this->_('Page created successfully'),

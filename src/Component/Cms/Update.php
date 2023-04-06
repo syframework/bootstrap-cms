@@ -30,6 +30,11 @@ class Update extends \Sy\Bootstrap\Component\Form\Crud {
 
 		// Description
 		$this->getField('description')->setAttribute('maxlength', '256');
+
+		// User id
+		$service = \Project\Service\Container::getInstance();
+		$userId = $service->user->getCurrentUser()->id;
+		$this->addHidden(['name' => 'form[updator_id]', 'value' => $userId]);
 	}
 
 	public function submitAction() {
