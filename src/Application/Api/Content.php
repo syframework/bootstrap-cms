@@ -84,8 +84,8 @@ class Content extends \Sy\Bootstrap\Component\Api {
 				'scss'        => $content['scss'],
 				'css'         => $content['css'],
 				'js'          => $content['js'],
-				'updator_id'  => $content['updator_id'],
-				'updated_at'  => $content['updated_id'],
+				'updator_id'  => $content['updator_id'] ?? null,
+				'updated_at'  => $content['updated_id'] ?? null,
 			]);
 
 			// Save new html
