@@ -168,6 +168,12 @@ $(function() {
 	setInterval(function() {
 		if (changed) save();
 	}, 60000);
+
+	setInterval(function() {
+		fetch('{CSRF_URL}').then(response => response.json()).then(data => {
+			csrf = data.csrf;
+		});
+	}, 1200000);
 	<!-- END UPDATE_BLOCK -->
 
 	<!-- BEGIN DELETE_BLOCK -->

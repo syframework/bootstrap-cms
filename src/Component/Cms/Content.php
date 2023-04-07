@@ -69,6 +69,7 @@ class Content extends \Sy\Component\WebComponent {
 				'FILE_UPLOAD_AJAX' => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'file', 'json' => '']),
 				'CKEDITOR_ROOT'    => CKEDITOR_ROOT,
 				'GET_URL'          => Url::build('api', 'content', ['id' => $this->id]),
+				'CSRF_URL'         => Url::build('api', 'csrf'),
 			]);
 			$js->setBlock('UPDATE_BLOCK');
 			$this->setBlock('UPDATE_INLINE_BTN_BLOCK');
