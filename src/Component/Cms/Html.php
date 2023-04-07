@@ -33,7 +33,7 @@ class Html extends \Sy\Bootstrap\Component\Form {
 		try {
 			$this->validatePost();
 			$html = $this->post('html');
-			$scss = $this->post('scss');
+			$scss = $this->post('css');
 			$js   = $this->post('js');
 
 			// Compile scss
