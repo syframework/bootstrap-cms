@@ -40,8 +40,25 @@ class Update extends \Sy\Bootstrap\Component\Form\Crud {
 	public function submitAction() {
 		try {
 			$this->validatePost();
+			$fields = $this->post('form');
 
-			// TODO: save in content history
+			// Save current version in t_content_history if title or description changed
+			$service = \Project\Service\Container::getInstance();
+			$content = $service->content->retrieve(['id' => $this->id]);
+			if (empty($content) or ($content['title'] !== $fields['title'] or $content['description'] !== $fields['description'])) {
+				$service->contentHistory->create([
+					'id'          => $content['id'],
+					'crc32'       => crc32($content['title'] . $content['description'] . $content['html'] . $content['scss'] . $content['css'] . $content['js'] . $content['updator_id'] . $content['updated_at']),
+					'title'       => $content['title'],
+					'description' => $content['description'],
+					'html'        => $content['html'],
+					'scss'        => $content['scss'],
+					'css'         => $content['css'],
+					'js'          => $content['js'],
+					'updator_id'  => $content['updator_id'] ?? null,
+					'updated_at'  => $content['updated_at'],
+				]);
+			}
 
 			$this->updateRow();
 			$this->setSuccess($this->_('Saved'), Url::build('page', 'content', ['id' => $this->id]));
