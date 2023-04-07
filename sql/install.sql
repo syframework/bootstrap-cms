@@ -22,7 +22,6 @@ CREATE TABLE `t_content` (
 CREATE TABLE `t_content_history` (
   `id` int UNSIGNED NOT NULL,
   `crc32` bigint NOT NULL,
-  `alias` varchar(128) NOT NULL,
   `title` varchar(128) NOT NULL,
   `description` varchar(512) NOT NULL,
   `html` mediumtext NOT NULL,

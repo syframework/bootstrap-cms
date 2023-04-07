@@ -40,6 +40,9 @@ class Update extends \Sy\Bootstrap\Component\Form\Crud {
 	public function submitAction() {
 		try {
 			$this->validatePost();
+
+			// TODO: save in content history
+
 			$this->updateRow();
 			$this->setSuccess($this->_('Saved'), Url::build('page', 'content', ['id' => $this->id]));
 		} catch (\Sy\Component\Html\Form\Exception $e) {

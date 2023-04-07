@@ -35,9 +35,9 @@ class Html extends \Sy\Bootstrap\Component\Form {
 
 			$service = \Project\Service\Container::getInstance();
 
-			// To do: save in conttent history
+			// TODO: save in content history
 
-			// To do: transpile scss
+			// TODO: transpile scss
 
 			// Save content
 			$service->content->update(['id' => $this->id], [
