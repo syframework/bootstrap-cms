@@ -77,6 +77,7 @@ class Content extends \Sy\Bootstrap\Component\Api {
 
 			// Save current version in t_content_history
 			$service->contentHistory->create([
+				'id'          => $content['id'],
 				'crc32'       => crc32($content['title'] . $content['description'] . $content['html'] . $content['scss'] . $content['css'] . $content['js'] . $content['updator_id'] . $content['updated_at']),
 				'title'       => $content['title'],
 				'description' => $content['description'],
