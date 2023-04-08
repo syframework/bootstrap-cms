@@ -22,7 +22,7 @@ class Content implements IProvider {
 
 		// Content pages
 		$service = \Project\Service\Container::getInstance();
-		$service->page->foreachRow(function($row) use(&$urls) {
+		$service->content->foreachRow(function($row) use(&$urls) {
 			$content = trim(Url::build('page', 'content', ['id' => $row['id']]), '/');
 			$alias = [];
 			foreach (LANGS as $lang => $label) {

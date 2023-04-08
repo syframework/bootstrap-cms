@@ -39,6 +39,7 @@ class ContentConverter implements IConverter {
 
 		$service = \Project\Service\Container::getInstance();
 		$content = $service->content->retrieve(['id' => $id]);
+		if (empty($content)) return false;
 		return WEB_ROOT . '/' . $this->prefix . $content['alias'] . (empty($params) ? '' : '?' . http_build_query($params));
 	}
 
