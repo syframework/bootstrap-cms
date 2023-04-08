@@ -40,6 +40,12 @@ class Content extends \Sy\Component\WebComponent {
 		$html->setTemplateContent($content['html']);
 		$this->setVar('HTML', Str::convertTemplateSlot(strval($html)));
 
+		// CSS
+		if (!empty($content['css'])) $this->addCssCode($content['css']);
+
+		// JS
+		if (!empty($content['js'])) $this->addJsCode($content['js']);
+
 		// Create
 		if ($service->user->getCurrentUser()->hasPermission('content-create')) {
 			$form = new Create();
