@@ -4,24 +4,30 @@
 
 ## Installation
 
+From your sy/project based application directory, run this command:
+
 ```bash
-composer require sy/bootstrap-cms
+composer install-plugin cms
 ```
 
-## Database
+---
+**NOTES**
 
-Use the database installation script: ```sql/install.sql```
+The install-plugin command will do all these following steps:
 
-Create the first content page on ```t_content``` table.
-
-Create a user and set user role to ```content-admin```.
-
-## Template files
-
-Copy template files into your project templates directory: ```protected/templates/Application/content```
+1. Run composer require
+2. Copy templates files
+3. Copy lang files
+4. Create flyway migration file
+5. Copy scss files
+6. Copy assets files
+7. Run composer build
+8. Run composer db migrate
+---
 
 ## Page methods
 
+Create a method in your ```Project\Application\Page``` class (in ```protected/src/Application/Page.php```):
 ```php
 	/**
 	 * Content page
@@ -44,11 +50,9 @@ Copy template files into your project templates directory: ```protected/template
 	}
 ```
 
-## Language files
-
-## CSS
-
 ## Add URL converter in Application.php
+
+In ```protected/src/Application.php```
 
 ```php
 <?php
@@ -60,8 +64,8 @@ class Application extends \Sy\Bootstrap\Application {
 
 	protected function initUrlConverter() {
 		Url\AliasManager::setAliasFile(__DIR__ . '/../conf/alias.php');
-		Url::addConverter(new Url\ContentConverter()); // Add the content URL converter
 		Url::addConverter(new Url\AliasConverter());
+		Url::addConverter(new Url\ContentConverter()); // Add the content URL converter
 		Url::addConverter(new Url\ControllerActionConverter());
 	}
 
