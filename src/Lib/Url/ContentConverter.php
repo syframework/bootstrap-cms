@@ -37,13 +37,9 @@ class ContentConverter implements IConverter {
 		$id = $params['id'];
 		unset($params['id']);
 
-		if (empty($params['lang'])) return false;
-		$lang = $params['lang'];
-		unset($params['lang']);
-
 		$service = \Project\Service\Container::getInstance();
-		$content = $service->content->retrieve(['id' => $id, 'lang' => $lang]);
-		if (empty($content['alias'])) return false;
+		$content = $service->content->retrieve(['id' => $id]);
+		if (empty($content)) return false;
 		return WEB_ROOT . '/' . $this->prefix . $content['alias'] . (empty($params) ? '' : '?' . http_build_query($params));
 	}
 
@@ -64,7 +60,6 @@ class ContentConverter implements IConverter {
 		$params[CONTROLLER_TRIGGER] = 'page';
 		$params[ACTION_TRIGGER] = 'content';
 		$params['id'] = $content['id'];
-		$params['lang'] = $content['lang'];
 
 		$queryParams = [];
 		if (!is_null($queryString)) parse_str($queryString, $queryParams);

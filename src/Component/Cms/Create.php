@@ -28,7 +28,6 @@ class Create extends \Sy\Bootstrap\Component\Form\Crud\Create {
 
 	public function submitAction() {
 		try {
-			$lang = \Sy\Translate\LangDetector::getInstance(LANG)->getLang();
 			$this->validatePost();
 			$fields = $this->post('form');
 
@@ -37,12 +36,14 @@ class Create extends \Sy\Bootstrap\Component\Form\Crud\Create {
 			$fields['scss'] = ' ';
 			$fields['css'] = ' ';
 			$fields['js'] = ' ';
-			$fields['lang'] = $lang;
+
+			$service = \Project\Service\Container::getInstance();
+			$fields['creator_id'] = $service->user->getCurrentUser()->id;
 
 			$id = $this->getService()->create($fields);
 			$this->setSuccess(
 				$this->_('Page created successfully'),
-				\Sy\Bootstrap\Lib\Url::build('page', 'content', ['id' => $id, 'lang' => $lang])
+				\Sy\Bootstrap\Lib\Url::build('page', 'content', ['id' => $id])
 			);
 		} catch (\Sy\Component\Html\Form\Exception $e) {
 			$this->logWarning($e);

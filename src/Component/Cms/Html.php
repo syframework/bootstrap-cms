@@ -5,11 +5,8 @@ class Html extends \Sy\Bootstrap\Component\Form {
 
 	private $id;
 
-	private $lang;
-
-	public function __construct($id, $lang) {
+	public function __construct($id) {
 		$this->id = $id;
-		$this->lang = $lang;
 		parent::__construct();
 	}
 
@@ -35,19 +32,41 @@ class Html extends \Sy\Bootstrap\Component\Form {
 	public function submitAction() {
 		try {
 			$this->validatePost();
+			$html = $this->post('html');
+			$scss = $this->post('css');
+			$js   = $this->post('js');
 
+			// Compile scss
+			$compiler = new \ScssPhp\ScssPhp\Compiler();
+			$css = $compiler->compileString($scss)->getCss();
+
+			// Compare with current version
 			$service = \Project\Service\Container::getInstance();
+			$content = $service->content->retrieve(['id' => $this->id]);
+			if (!empty($content) and $content['html'] === $html and $content['scss'] === $scss and $content['css'] === $css and $content['js'] === $js) {
+				$this->setSuccess($this->_('No change detected'));
+			}
 
-			// To do: save in conttent history
-
-			// To do: transpile scss
+			// Save version in content history
+			$service->contentHistory->create([
+				'id'          => $content['id'],
+				'crc32'       => crc32($content['title'] . $content['description'] . $content['html'] . $content['scss'] . $content['css'] . $content['js'] . $content['updator_id'] . $content['updated_at']),
+				'title'       => $content['title'],
+				'description' => $content['description'],
+				'html'        => $content['html'],
+				'scss'        => $content['scss'],
+				'css'         => $content['css'],
+				'js'          => $content['js'],
+				'updator_id'  => $content['updator_id'] ?? null,
+				'updated_at'  => $content['updated_at'],
+			]);
 
 			// Save content
-			$service->content->update(['id' => $this->id, 'lang' => $this->lang], [
-				'html' => $this->post('html'),
-				'scss' => $this->post('css'),
-				'css'  => $this->post('css'),
-				'js'   => $this->post('js'),
+			$service->content->update(['id' => $this->id], [
+				'html' => $html,
+				'scss' => $scss,
+				'css'  => $css,
+				'js'   => $js,
 			]);
 
 			$this->setSuccess($this->_('Source code updated successfully'));
