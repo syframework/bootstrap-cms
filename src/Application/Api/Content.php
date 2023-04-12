@@ -69,30 +69,13 @@ class Content extends \Sy\Bootstrap\Component\Api {
 				]);
 			}
 
-			// Compare with current version
-			$content = $service->content->retrieve(['id' => $id]);
-			if (!empty($content) and ($content['html'] === $html)) {
-				return $this->ok(['status' > 'ok', 'message' => 'No change detected']);
-			}
-
-			// Save current version in t_content_history
-			$service->contentHistory->create([
-				'id'          => $content['id'],
-				'crc32'       => crc32($content['title'] . $content['description'] . $content['html'] . $content['scss'] . $content['css'] . $content['js'] . $content['updator_id'] . $content['updated_at']),
-				'title'       => $content['title'],
-				'description' => $content['description'],
-				'html'        => $content['html'],
-				'scss'        => $content['scss'],
-				'css'         => $content['css'],
-				'js'          => $content['js'],
-				'updator_id'  => $content['updator_id'] ?? null,
-				'updated_at'  => $content['updated_at'],
-			]);
-
 			// Save new html
 			$service->content->update(['id' => $id], ['html' => $html, 'updator_id' => $service->user->getCurrentUser()->id]);
 			return $this->ok(['status' => 'ok']);
 		} catch (\Sy\Db\MySql\Exception $e) {
+			if ($e->getCode() === 1644) {
+				return $this->ok(['status' => 'ok', 'message' => $this->_('No change detected')]);
+			}
 			return $this->serverError([
 				'status' => 'ko',
 				'message' => $this->_('Database error'),
