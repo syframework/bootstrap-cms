@@ -41,6 +41,7 @@ class Html extends \Sy\Bootstrap\Component\Form {
 			$css = $compiler->compileString($scss)->getCss();
 
 			// Save content
+			$service = \Project\Service\Container::getInstance();
 			$service->content->update(['id' => $this->id], [
 				'html' => $html,
 				'scss' => $scss,
