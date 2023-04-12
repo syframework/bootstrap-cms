@@ -35,6 +35,36 @@ CREATE TABLE `t_content_history` (
   FOREIGN KEY (`id`) REFERENCES `t_content` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE TRIGGER `t_content_history_insert` BEFORE UPDATE ON `t_content` FOR EACH ROW
+BEGIN
+	DECLARE crc32 BIGINT;
+	DECLARE crc32old BIGINT;
+
+	SET crc32 = CRC32(CONCAT( NEW.title, NEW.description, NEW.html, NEW.scss, NEW.css, NEW.js ));
+
+	SET crc32old = CRC32(CONCAT( OLD.title, OLD.description, OLD.html, OLD.scss, OLD.css, OLD.js ));
+
+	IF crc32 = crc32old THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = 'No change';
+	END IF;
+
+	INSERT INTO `t_content_history` ( `id`, `crc32`, `title`, `description`, `html`, `scss`, `css`, `js`, `updator_id`, `updated_at` )
+	VALUES
+		(
+			OLD.id,
+			crc32,
+			OLD.title,
+			OLD.description,
+			OLD.html,
+			OLD.scss,
+			OLD.css,
+			OLD.js,
+			OLD.updator_id,
+			OLD.updated_at
+		);
+END;
+
 INSERT INTO `t_content` (`id`, `alias`, `title`, `description`, `html`, `scss`, `css`, `js`) VALUES (1, '', 'Home page', 'This is the home page', '<div class="container">Hello world!</div>', '', '', '');
 
 -- ----------------------------
