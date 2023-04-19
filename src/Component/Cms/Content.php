@@ -32,7 +32,20 @@ class Content extends \Sy\Component\WebComponent {
 		$this->setTemplateFile(__DIR__ . '/Content.html');
 
 		$service = \Project\Service\Container::getInstance();
-		$content = $service->content->retrieve(['id' => $this->id]);
+		$user = $service->user->getCurrentUser();
+
+		// Content version
+		$version = $this->get('version');
+		if (!is_null($version) and $user->hasPermission('content-history-view')) {
+			$content = $service->contentHistory->retrieve(['id' => $this->id, 'crc32' => $version]);
+		} else {
+			$content = $service->content->retrieve(['id' => $this->id]);
+		}
+
+		// Content not found
+		if (empty($content)) {
+			throw new \Sy\Bootstrap\Application\Page\NotFoundException();
+		}
 
 		// TODO: maybe use a specific lang directory for CMS content
 		$html = new \Sy\Component();
@@ -45,6 +58,22 @@ class Content extends \Sy\Component\WebComponent {
 
 		// JS
 		if (!empty($content['js'])) $this->addJsCode($content['js']);
+
+		// Version history
+		if ($user->hasPermission('content-history-view')) {
+			$this->setBlock('HISTORY_BTN_BLOCK');
+			$this->setBlock('HISTORY_MODAL_BLOCK', ['HISTORY_LIST' => 'version list']); // TODO: version list component
+		}
+
+		// Version history restore
+		if (!is_null($version)) {
+			$this->setBlock('BACK_BTN_BLOCK', ['BACK_URL' => Url::build('page', 'content', ['id' => $this->id])]);
+
+			if ($user->hasPermission('content-history-restore')) {
+				$this->setBlock('RESTORE_BTN_BLOCK', ['RESTORE_URL' => Url::build('content', 'restore', ['id' => $this->id, 'version' => $version])]);
+			}
+			return;
+		}
 
 		// Create
 		if ($service->user->getCurrentUser()->hasPermission('content-create')) {

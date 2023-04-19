@@ -16,8 +16,6 @@ class Content extends \Sy\Bootstrap\Component\Api {
 
 	/**
 	 * Retrieve content page
-	 *
-	 * @return void
 	 */
 	public function getAction() {
 		$id = $this->get('id');
@@ -45,8 +43,6 @@ class Content extends \Sy\Bootstrap\Component\Api {
 
 	/**
 	 * Update content page
-	 *
-	 * @return void
 	 */
 	public function postAction() {
 		$service = \Project\Service\Container::getInstance();
