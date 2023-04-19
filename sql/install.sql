@@ -80,6 +80,8 @@ INSERT INTO `t_user_permission` VALUES ('content-delete', 'Delete a content page
 INSERT INTO `t_user_permission` VALUES ('content-code', 'Update content page source code');
 INSERT INTO `t_user_permission` VALUES ('content-update', 'Update a content page settings');
 INSERT INTO `t_user_permission` VALUES ('content-update-inline', 'Update a content page with inline edition (need content-update)');
+INSERT INTO `t_user_permission` VALUES ('content-history-view', 'View an old version from content history');
+INSERT INTO `t_user_permission` VALUES ('content-history-restore', 'Restore an old version from content history');
 
 -- ----------------------------
 -- Records of t_user_role
@@ -94,5 +96,7 @@ INSERT INTO `t_user_role_has_permission` VALUES ('content-admin', 'content-delet
 INSERT INTO `t_user_role_has_permission` VALUES ('content-admin', 'content-update');
 INSERT INTO `t_user_role_has_permission` VALUES ('content-admin', 'content-update-inline');
 INSERT INTO `t_user_role_has_permission` VALUES ('content-admin', 'content-code');
+INSERT INTO `t_user_role_has_permission` VALUES ('content-admin', 'content-history-view');
+INSERT INTO `t_user_role_has_permission` VALUES ('content-admin', 'content-history-restore');
 
 SET FOREIGN_KEY_CHECKS=1;
