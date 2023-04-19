@@ -31,6 +31,12 @@ class Content extends \Sy\Component {
 			$this->redirect(isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : WEB_ROOT . '/');
 		}
 
+		$user = $service->user->getCurrentUser();
+		if (!$user->hasPermission('content-history-restore')) {
+			\Sy\Bootstrap\Lib\FlashMessage::setError($this->_('No permission'));
+			$this->redirect(isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : WEB_ROOT . '/');
+		}
+
 		try {
 			$service->content->update(['id' => $id], [
 				'title'       => $content['title'],
@@ -39,7 +45,7 @@ class Content extends \Sy\Component {
 				'scss'        => $content['scss'],
 				'css'         => $content['css'],
 				'js'          => $content['js'],
-				'updator_id'  => $service->user->getCurrentUser()->id,
+				'updator_id'  => $user->id,
 			]);
 			\Sy\Bootstrap\Lib\FlashMessage::setMessage($this->_('Version restored successfully'));
 			$this->redirect(Url::build('page', 'content', ['id' => $id]));
