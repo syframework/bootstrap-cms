@@ -38,18 +38,37 @@ CREATE TABLE `t_content_history` (
 CREATE TRIGGER `t_content_history_insert` BEFORE UPDATE ON `t_content` FOR EACH ROW
 BEGIN
 DECLARE crc32 bigint;
-DECLARE crc32old bigint;
-SET crc32 = CRC32(CONCAT(NEW.title, NEW.description, NEW.html, NEW.scss, NEW.css, NEW.js));
-SET crc32old = CRC32(CONCAT(OLD.title, OLD.description, OLD.html, OLD.scss, OLD.css, OLD.js));
+DECLARE newContent bigint;
+DECLARE oldContent bigint;
+SET newContent = CRC32(CONCAT(NEW.title, NEW.description, NEW.html, NEW.scss, NEW.css, NEW.js));
+SET oldContent = CRC32(CONCAT(OLD.title, OLD.description, OLD.html, OLD.scss, OLD.css, OLD.js));
 
-IF crc32 = crc32old AND NEW.alias = OLD.alias THEN
+IF newContent = oldContent AND NEW.alias = OLD.alias THEN
 	SIGNAL SQLSTATE '45000'
 	SET MESSAGE_TEXT = 'No change';
 ELSEIF NEW.alias = OLD.alias THEN
+	SET crc32 = CRC32(CONCAT(OLD.title, OLD.description, OLD.html, OLD.scss, OLD.css, OLD.js, OLD.updator_id, OLD.updated_at));
 	INSERT INTO `t_content_history` (`id`, `crc32`, `title`, `description`, `html`, `scss`, `css`, `js`, `updator_id`, `updated_at`)
 	VALUES (OLD.id, crc32, OLD.title, OLD.description, OLD.html, OLD.scss, OLD.css, OLD.js, OLD.updator_id, OLD.updated_at);
 END IF;
 END;
+
+CREATE VIEW `v_content_history` AS
+SELECT
+	`t_content_history`.`id` AS `id`,
+	`t_content_history`.`crc32` AS `crc32`,
+	`t_content_history`.`title` AS `title`,
+	`t_content_history`.`description` AS `description`,
+	`t_content_history`.`html` AS `html`,
+	`t_content_history`.`scss` AS `scss`,
+	`t_content_history`.`css` AS `css`,
+	`t_content_history`.`js` AS `js`,
+	`t_content_history`.`updator_id` AS `updator_id`,
+	`t_content_history`.`updated_at` AS `updated_at`,
+	concat( `t_user`.`firstname`, ' ', `t_user`.`lastname` ) AS `username`,
+	`t_user`.`email` AS `email`
+FROM `t_content_history`
+LEFT JOIN `t_user` ON `t_content_history`.`updator_id` = `t_user`.`id`;
 
 INSERT INTO `t_content` (`id`, `alias`, `title`, `description`, `html`, `scss`, `css`, `js`) VALUES (1, '', 'Home page', 'This is the home page', '<div class="container">Hello world!</div>', '', '', '');
 
