@@ -53,7 +53,8 @@ class Content extends \Sy\Component {
 			if ($e->getCode() === 1644) {
 				\Sy\Bootstrap\Lib\FlashMessage::setMessage($this->_('No content version found'));
 			} else {
-				\Sy\Bootstrap\Lib\FlashMessage::setMessage($this->_('Database error'));
+				$this->logError($e);
+				\Sy\Bootstrap\Lib\FlashMessage::setError($this->_('Database error'));
 			}
 			$this->redirect(isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : WEB_ROOT . '/');
 		}

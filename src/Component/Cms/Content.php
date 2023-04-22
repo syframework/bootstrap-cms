@@ -62,7 +62,7 @@ class Content extends \Sy\Component\WebComponent {
 		// Version history
 		if ($user->hasPermission('content-history-view')) {
 			$this->setBlock('HISTORY_BTN_BLOCK');
-			$this->setBlock('HISTORY_MODAL_BLOCK', ['HISTORY_LIST' => 'version list']); // TODO: version list component
+			$this->setBlock('HISTORY_MODAL_BLOCK', ['HISTORY_LIST' => new HistoryFeed($this->id)]); // TODO: version list component
 		}
 
 		// Version history restore

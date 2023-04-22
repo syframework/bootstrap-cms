@@ -1,0 +1,14 @@
+<a href="{URL}" class="list-group-item list-group-item-action" data-id="{ID}">
+	<small class="date text-capitalize-first text-secondary float-end" data-date="{TIMESTAMP}">{DATE}</small>
+	<div>
+		<img class="rounded-circle" style="height: 1.25em" src="{USERIMG}" alt="{USERNAME}" />
+		<strong>{USERNAME}</strong><br />
+		<small class="text-secondary">
+			{"updated on"}
+			<strong data-date="{TIMESTAMP}" data-date-format='{"year":"numeric","month":"long","day":"numeric","weekday":"long","hour":"numeric","minute":"numeric","second":"numeric"}'>{DATE_FULL}</strong>
+		</small>
+		<!-- BEGIN CURRENT_BLOCK -->
+		<span class="badge text-bg-primary float-end">{"Currently"}</span>
+		<!-- END CURRENT_BLOCK -->
+	</div>
+</a>
