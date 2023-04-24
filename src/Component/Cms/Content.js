@@ -75,7 +75,30 @@ $(function() {
 		e.preventDefault();
 		$.getJSON('{GET_URL}', function(res) {
 			if (res.status === 'ok') {
+				// Extract sycomponents
+				let sycomponents = {};
+				document.querySelectorAll('[data-sycomponent]').forEach(function (element) {
+					let key = element.getAttribute('data-sycomponent');
+					let args = element.getAttribute('data-sycomponent-args');
+					if (args) key += args;
+					sycomponents[btoa(key)] = element.innerHTML;
+				});
+
+				// Replace current html by template source code
 				$('#sy-content').html(res.content);
+
+				// Replace slots by components
+				document.querySelectorAll('[data-sycomponent]').forEach(function (element) {
+					let key = element.getAttribute('data-sycomponent');
+					let args = element.getAttribute('data-sycomponent-args');
+					if (args) key += args;
+					if (sycomponents[btoa(key)]) {
+						let slot = element.innerHTML;
+						element.setAttribute('data-sycomponent-slot', slot);
+						element.innerHTML = sycomponents[btoa(key)];
+					}
+				});
+
 				$('#sy-content').attr('contenteditable', true);
 				if (!CKEDITOR.instances['sy-content']) {
 					var editor = CKEDITOR.inline('sy-content', {

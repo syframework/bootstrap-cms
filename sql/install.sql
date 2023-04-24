@@ -4,7 +4,7 @@ CREATE TABLE `t_content` (
   `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
   `alias` varchar(128) NOT NULL DEFAULT '',
   `title` varchar(128) NOT NULL DEFAULT '',
-  `description` varchar(512) NOT NULL DEFAULT '',
+  `description` varchar(512) NOT NULL DEFAULT '' COMMENT 'textarea',
   `html` mediumtext NOT NULL COMMENT 'none',
   `scss` text NOT NULL COMMENT 'none',
   `css` text NOT NULL COMMENT 'none',
