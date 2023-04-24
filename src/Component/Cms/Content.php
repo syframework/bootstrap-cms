@@ -189,9 +189,19 @@ class Content extends WebComponent {
 			$slot = trim(trim($slot), '{}');
 			if (!class_exists($class)) continue;
 
-			// TODO: retrieve arguments from attribute data-sycomponent-args
-			$component = new $class();
-			$container->setVar($slot, $component);
+			// Retrieve arguments from attribute data-sycomponent-args
+			try {
+				$args = $element->getAttribute('data-sycomponent-args');
+				if (!empty($args)) {
+					$args = json_decode($args, true);
+					$component = new $class(...$args);
+				} else {
+					$component = new $class();
+				}
+				$container->setVar($slot, $component);
+			} catch (\Error $e) {
+				$this->logError($e);
+			}
 		}
 	}
 
