@@ -30,6 +30,7 @@ class Content extends WebComponent {
 	}
 
 	private function init() {
+		$this->addTranslator(LANG_DIR . '/bootstrap-cms');
 		$this->setTemplateFile(__DIR__ . '/Content.html');
 
 		$service = \Project\Service\Container::getInstance();
