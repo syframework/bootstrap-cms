@@ -4,8 +4,9 @@ namespace Sy\Bootstrap\Component\Cms;
 use Sy\Bootstrap\Lib\Url;
 use Sy\Bootstrap\Lib\HeadData;
 use Sy\Bootstrap\Lib\Str;
+use Sy\Component\WebComponent;
 
-class Content extends \Sy\Component\WebComponent {
+class Content extends WebComponent {
 
 	/**
 	 * @var int
@@ -48,10 +49,15 @@ class Content extends \Sy\Component\WebComponent {
 		}
 
 		// TODO: maybe use a specific lang directory for CMS content
-		$html = new \Sy\Component();
+		$html = new WebComponent();
 		$html->addTranslator(LANG_DIR);
 		$html->setTemplateContent($content['html']);
+
+		// Add web components in content
+		$this->initComponents($html, $content['html']);
 		$this->setVar('HTML', Str::convertTemplateSlot(strval($html)));
+		$this->mergeCss($html);
+		$this->mergeJs($html);
 
 		// CSS
 		if (!empty($content['css'])) $this->addCssCode($content['css']);
@@ -62,7 +68,7 @@ class Content extends \Sy\Component\WebComponent {
 		// Version history
 		if ($user->hasPermission('content-history-view')) {
 			$this->setBlock('HISTORY_BTN_BLOCK');
-			$this->setBlock('HISTORY_MODAL_BLOCK', ['HISTORY_LIST' => new HistoryFeed($this->id)]); // TODO: version list component
+			$this->setBlock('HISTORY_MODAL_BLOCK', ['HISTORY_LIST' => new HistoryFeed($this->id)]);
 		}
 
 		// Version history restore
@@ -108,6 +114,9 @@ class Content extends \Sy\Component\WebComponent {
 			]);
 			$js->setBlock('UPDATE_BLOCK');
 			$this->setBlock('UPDATE_INLINE_BTN_BLOCK');
+
+			// Ckeditor hidden fields css
+			$this->addCssCode('[data-sycomponent] .cke_hidden {display: none;}');
 		}
 
 		// Update
@@ -156,6 +165,34 @@ class Content extends \Sy\Component\WebComponent {
 
 		// Add javascript code
 		$this->addJsCode($js);
+	}
+
+	/**
+	 * Find from the html code all the components and set then in the container component
+	 *
+	 * @param WebComponent $container
+	 * @param string $html
+	 */
+	private function initComponents($container, $html) {
+		libxml_use_internal_errors(true);
+		$doc = new \DOMDocument();
+		$doc->loadHTML($html);
+		$xpath = new \DOMXPath($doc);
+		$elements = $xpath->query("//*[@data-sycomponent]");
+
+		foreach ($elements as $element) {
+			$class = $element->getAttribute('data-sycomponent');
+			if (empty($class)) continue;
+			$slot = $element->nodeValue;
+			if (empty($slot)) continue;
+			$class = trim($class);
+			$slot = trim(trim($slot), '{}');
+			if (!class_exists($class)) continue;
+
+			// TODO: retrieve arguments from attribute data-sycomponent-args
+			$component = new $class();
+			$container->setVar($slot, $component);
+		}
 	}
 
 }
