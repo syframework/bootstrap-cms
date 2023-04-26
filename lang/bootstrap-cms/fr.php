@@ -6,4 +6,5 @@ return [
 	'Back to current version' => 'Retour à la version actuelle',
 	'Restore this version' => 'Restaurer cette version',
 	'Currently' => 'Actuellement',
+	'No history' => "Pas d'historique",
 ];
