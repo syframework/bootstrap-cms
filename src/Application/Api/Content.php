@@ -69,6 +69,7 @@ class Content extends \Sy\Bootstrap\Component\Api {
 			$service->content->update(['id' => $id], ['html' => $html, 'updator_id' => $service->user->getCurrentUser()->id]);
 			return $this->ok(['status' => 'ok']);
 		} catch (\Sy\Db\MySql\Exception $e) {
+			$this->logError($e);
 			if ($e->getCode() === 1644) {
 				return $this->ok(['status' => 'ok', 'message' => $this->_('No change detected')]);
 			}
