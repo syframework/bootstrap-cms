@@ -47,7 +47,7 @@ IF newContent = oldContent AND NEW.alias = OLD.alias THEN
 	SIGNAL SQLSTATE '45000'
 	SET MESSAGE_TEXT = 'No change';
 ELSEIF NEW.alias = OLD.alias THEN
-	SET crc32 = CRC32(CONCAT(OLD.title, OLD.description, OLD.html, OLD.scss, OLD.css, OLD.js, OLD.updator_id, OLD.updated_at));
+	SET crc32 = CRC32(CONCAT(OLD.title, OLD.description, OLD.html, OLD.scss, OLD.css, OLD.js, OLD.updated_at));
 	INSERT INTO `t_content_history` (`id`, `crc32`, `title`, `description`, `html`, `scss`, `css`, `js`, `updator_id`, `updated_at`)
 	VALUES (OLD.id, crc32, OLD.title, OLD.description, OLD.html, OLD.scss, OLD.css, OLD.js, OLD.updator_id, OLD.updated_at);
 END IF;
@@ -92,6 +92,7 @@ INSERT INTO `t_user_permission` VALUES ('content-history-restore', 'Restore an o
 -- Records of t_user_role
 -- ----------------------------
 INSERT INTO `t_user_role` VALUES ('content-admin', 'Content administrator');
+INSERT INTO `t_user_role` VALUES ('content-manager', 'Content manager');
 
 -- ----------------------------
 -- Records of t_user_role_has_permission
@@ -103,5 +104,19 @@ INSERT INTO `t_user_role_has_permission` VALUES ('content-admin', 'content-updat
 INSERT INTO `t_user_role_has_permission` VALUES ('content-admin', 'content-code');
 INSERT INTO `t_user_role_has_permission` VALUES ('content-admin', 'content-history-view');
 INSERT INTO `t_user_role_has_permission` VALUES ('content-admin', 'content-history-restore');
+
+INSERT INTO `t_user_role_has_permission` VALUES ('content-manager', 'content-create');
+INSERT INTO `t_user_role_has_permission` VALUES ('content-manager', 'content-delete');
+INSERT INTO `t_user_role_has_permission` VALUES ('content-manager', 'content-update');
+INSERT INTO `t_user_role_has_permission` VALUES ('content-manager', 'content-update-inline');
+INSERT INTO `t_user_role_has_permission` VALUES ('content-manager', 'content-history-view');
+INSERT INTO `t_user_role_has_permission` VALUES ('content-manager', 'content-history-restore');
+
+INSERT INTO `t_user_role_has_permission` VALUES ('admin', 'content-create');
+INSERT INTO `t_user_role_has_permission` VALUES ('admin', 'content-delete');
+INSERT INTO `t_user_role_has_permission` VALUES ('admin', 'content-update');
+INSERT INTO `t_user_role_has_permission` VALUES ('admin', 'content-update-inline');
+INSERT INTO `t_user_role_has_permission` VALUES ('admin', 'content-history-view');
+INSERT INTO `t_user_role_has_permission` VALUES ('admin', 'content-history-restore');
 
 SET FOREIGN_KEY_CHECKS=1;
