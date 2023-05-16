@@ -50,6 +50,16 @@ Create a method in your ```Project\Application\Page``` class (in ```protected/sr
 	}
 ```
 
+Optionally, override the home page with the content page
+```php
+	/**
+	 * Home page
+	 */
+	public function homeAction() {
+		$this->copy('content');
+	}
+```
+
 ## Add URL converter in Application.php
 
 In ```protected/src/Application.php```

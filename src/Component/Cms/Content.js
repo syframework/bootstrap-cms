@@ -189,14 +189,19 @@ $(function() {
 	});
 
 	setInterval(function() {
-		if (changed) save();
-	}, 60000);
-
-	setInterval(function() {
 		fetch('{CSRF_URL}').then(response => response.json()).then(data => {
 			csrf = data.csrf;
 		});
 	}, 1200000);
+
+	window.addEventListener("beforeunload", function (e) {
+		if (changed) {
+			var confirmationMessage = 'Unsaved changes';
+			e.returnValue = confirmationMessage;
+			return confirmationMessage;
+		}
+	});
+
 	<!-- END UPDATE_BLOCK -->
 
 	<!-- BEGIN DELETE_BLOCK -->
