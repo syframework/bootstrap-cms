@@ -7,4 +7,5 @@ return [
 	'Restore this version' => 'Restaurer cette version',
 	'Currently' => 'Actuellement',
 	'No history' => "Pas d'historique",
+	'Restore this version?' => 'Restaurer cette version ?',
 ];
