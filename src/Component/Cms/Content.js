@@ -217,44 +217,54 @@ $(function() {
 	let codeEditorHeight;
 	let htmlLoaded = false;
 
-	$('#sy-code-modal').on('shown.bs.modal', function (e) {
+	$('#sy-code-modal').on('show.bs.modal', function (e) {
 		codeEditorHeight = window.innerHeight - $(this).find('.modal-header').outerHeight() - $(this).find('.modal-footer').outerHeight();
-		$('#codearea_{CM_HTML_ID}').height(codeEditorHeight);
-		ace.edit('codearea_{CM_HTML_ID}').resize();
+		$('#codearea_codearea_html_{ID}').height(codeEditorHeight);
+		ace.edit('codearea_codearea_html_{ID}').resize();
 
 		if (htmlLoaded) return;
 		$.getJSON('{GET_URL}', function(res) {
 			if (res.status === 'ok') {
-				ace.edit('codearea_{CM_HTML_ID}').session.setValue(res.content);
+				ace.edit('codearea_codearea_html_{ID}').session.setValue(res.content);
 				htmlLoaded = true;
 			}
 		});
 	});
 
 	$('#sy-css-tab').on('shown.bs.tab', function (e) {
-		$('#codearea_{CM_CSS_ID}').height(codeEditorHeight);
-		ace.edit('codearea_{CM_CSS_ID}').resize();
+		$('#codearea_codearea_css_{ID}').height(codeEditorHeight);
+		ace.edit('codearea_codearea_css_{ID}').resize();
 	});
 
 	$('#sy-js-tab').on('shown.bs.tab', function (e) {
-		$('#codearea_{CM_JS_ID}').height(codeEditorHeight);
-		ace.edit('codearea_{CM_JS_ID}').resize();
+		$('#codearea_codearea_js_{ID}').height(codeEditorHeight);
+		ace.edit('codearea_codearea_js_{ID}').resize();
 	});
 
 	$('#sy-code-modal form').submit(function(e) {
-		let code = ace.edit('codearea_{CM_JS_ID}').getValue();
+		let code = ace.edit('codearea_codearea_js_{ID}').getValue();
 		try {
 			eval(code);
 		} catch (err) {
-			alert('JS code error');
+			flash('JS code error', 'danger');
 			e.preventDefault();
 		}
 
 		this.js.value = code;
-		this.css.value = ace.edit('codearea_{CM_CSS_ID}').getValue();
+		this.css.value = ace.edit('codearea_codearea_css_{ID}').getValue();
 	});
 
 	$('#sy-new-page-modal').has('div.alert').modal('show');
 	$('#sy-update-page-modal').has('div.alert').modal('show');
+	$('#sy-code-modal').has('div.alert').modal('show');
+
+	// Error message
+	let errorMsg = $('#sy-code-modal div.alert').text();
+	if (errorMsg) {
+		if (errorMsg.startsWith('SCSS')) {
+			$('#sy-css-tab').tab('show');
+		}
+		flash(errorMsg, 'danger');
+	}
 	<!-- END CODE_BLOCK -->
 });

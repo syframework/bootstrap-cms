@@ -142,22 +142,10 @@ class Content extends WebComponent {
 
 		// Code
 		if ($service->user->getCurrentUser()->hasPermission('content-code')) {
-			// HTML Code
-			$this->setComponent('HTML_FORM', new Html($this->id));
-			$this->setVar('FORM_HTML_ID', 'form_html_' . $this->id);
-			$js->setVars([
-				'CM_HTML_ID' => 'codearea_html_' . $this->id,
+			$this->setVars([
+				'CODE_FORM'    => new Code($this->id),
+				'CODE_FORM_ID' => 'code_form_' . $this->id,
 			]);
-
-			// CSS Code
-			$this->setComponent('CSS_FORM', new Css($this->id));
-			$this->setVar('FORM_CSS_ID', 'form_css_' . $this->id);
-			$js->setVar('CM_CSS_ID', 'codearea_css_' . $this->id);
-
-			// JS Code
-			$this->setComponent('JS_FORM', new Js($this->id));
-			$this->setVar('FORM_JS_ID', 'form_js_' . $this->id);
-			$js->setVar('CM_JS_ID', 'codearea_js_' . $this->id);
 
 			$js->setBlock('CODE_BLOCK');
 			$this->setBlock('CODE_BTN_BLOCK');
