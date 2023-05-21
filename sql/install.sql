@@ -106,7 +106,6 @@ INSERT INTO `t_user_role_has_permission` VALUES ('content-admin', 'content-histo
 INSERT INTO `t_user_role_has_permission` VALUES ('content-admin', 'content-history-restore');
 
 INSERT INTO `t_user_role_has_permission` VALUES ('content-manager', 'content-create');
-INSERT INTO `t_user_role_has_permission` VALUES ('content-manager', 'content-delete');
 INSERT INTO `t_user_role_has_permission` VALUES ('content-manager', 'content-update');
 INSERT INTO `t_user_role_has_permission` VALUES ('content-manager', 'content-update-inline');
 INSERT INTO `t_user_role_has_permission` VALUES ('content-manager', 'content-history-view');
@@ -116,6 +115,7 @@ INSERT INTO `t_user_role_has_permission` VALUES ('admin', 'content-create');
 INSERT INTO `t_user_role_has_permission` VALUES ('admin', 'content-delete');
 INSERT INTO `t_user_role_has_permission` VALUES ('admin', 'content-update');
 INSERT INTO `t_user_role_has_permission` VALUES ('admin', 'content-update-inline');
+INSERT INTO `t_user_role_has_permission` VALUES ('admin', 'content-code');
 INSERT INTO `t_user_role_has_permission` VALUES ('admin', 'content-history-view');
 INSERT INTO `t_user_role_has_permission` VALUES ('admin', 'content-history-restore');
 
