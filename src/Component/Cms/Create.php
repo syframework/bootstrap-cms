@@ -3,8 +3,32 @@ namespace Sy\Bootstrap\Component\Cms;
 
 class Create extends \Sy\Bootstrap\Component\Form\Crud\Create {
 
-	public function __construct() {
+	/**
+	 * @var string
+	 */
+	private $html;
+
+	/**
+	 * @var string
+	 */
+	private $scss;
+
+	/**
+	 * @var string
+	 */
+	private $css;
+
+	/**
+	 * @var string
+	 */
+	private $js;
+
+	public function __construct($html = null, $scss = null, $css = null, $js = null) {
 		parent::__construct('content');
+		$this->html = $html;
+		$this->scss = $scss;
+		$this->css  = $css;
+		$this->js   = $js;
 	}
 
 	public function init() {
@@ -32,10 +56,10 @@ class Create extends \Sy\Bootstrap\Component\Form\Crud\Create {
 			$fields = $this->post('form');
 
 			// Default content
-			$fields['html'] = '<div class="container">Hello world!</div>';
-			$fields['scss'] = ' ';
-			$fields['css'] = ' ';
-			$fields['js'] = ' ';
+			$fields['html'] = $this->html ?? file_get_contents(TPL_DIR . '/Component/Cms/new.html');
+			$fields['scss'] = $this->scss ?? '';
+			$fields['css']  = $this->css  ?? '';
+			$fields['js']   = $this->js   ?? '';
 
 			$service = \Project\Service\Container::getInstance();
 			$fields['creator_id'] = $service->user->getCurrentUser()->id;

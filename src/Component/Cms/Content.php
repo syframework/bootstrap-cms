@@ -87,6 +87,9 @@ class Content extends WebComponent {
 			$form = new Create();
 			$form->initialize();
 			$this->setComponent('NEW_PAGE_FORM', $form);
+			$duplicateForm = new Create($content['html'], $content['scss'], $content['css'], $content['js']);
+			$duplicateForm->initialize();
+			$this->setComponent('DUPLICATE_PAGE_FORM', $duplicateForm);
 			$this->setBlock('CREATE_BTN_BLOCK');
 			$this->setBlock('CREATE_MODAL_BLOCK');
 		}
