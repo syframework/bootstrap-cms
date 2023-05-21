@@ -8,4 +8,5 @@ return [
 	'Currently' => 'Actuellement',
 	'No history' => "Pas d'historique",
 	'Restore this version?' => 'Restaurer cette version ?',
+	'Duplicate page' => 'Dupliquer la page',
 ];
