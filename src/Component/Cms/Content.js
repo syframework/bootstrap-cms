@@ -216,10 +216,20 @@ $(function() {
 	<!-- BEGIN CODE_BLOCK -->
 	let htmlLoaded = false;
 
-	$('#sy-code-modal').on('shown.bs.modal', function (e) {
-		let codeEditorHeight = window.innerHeight - $(this).find('.modal-header').outerHeight() - $(this).find('.modal-footer').outerHeight();
+	function resizeCodeArea() {
+		let codeEditorHeight = window.innerHeight - $('#sy-code-modal').find('.modal-header').outerHeight() - $('#sy-code-modal').find('.modal-footer').outerHeight();
 		$('#codearea_codearea_html_{ID}').height(codeEditorHeight);
 		ace.edit('codearea_codearea_html_{ID}').resize();
+		$('#codearea_codearea_css_{ID}').height(codeEditorHeight);
+		ace.edit('codearea_codearea_css_{ID}').resize();
+		$('#codearea_codearea_js_{ID}').height(codeEditorHeight);
+		ace.edit('codearea_codearea_js_{ID}').resize();
+	}
+
+	window.addEventListener('resize', resizeCodeArea);
+
+	$('#sy-code-modal').on('shown.bs.modal', function (e) {
+		resizeCodeArea();
 
 		if (htmlLoaded) return;
 		$.getJSON('{GET_URL}', function(res) {
@@ -228,18 +238,6 @@ $(function() {
 				htmlLoaded = true;
 			}
 		});
-	});
-
-	$('#sy-css-tab').on('shown.bs.tab', function (e) {
-		let codeEditorHeight = window.innerHeight - $('#sy-code-modal').find('.modal-header').outerHeight() - $('#sy-code-modal').find('.modal-footer').outerHeight();
-		$('#codearea_codearea_css_{ID}').height(codeEditorHeight);
-		ace.edit('codearea_codearea_css_{ID}').resize();
-	});
-
-	$('#sy-js-tab').on('shown.bs.tab', function (e) {
-		let codeEditorHeight = window.innerHeight - $('#sy-code-modal').find('.modal-header').outerHeight() - $('#sy-code-modal').find('.modal-footer').outerHeight();
-		$('#codearea_codearea_js_{ID}').height(codeEditorHeight);
-		ace.edit('codearea_codearea_js_{ID}').resize();
 	});
 
 	$('#sy-code-modal form').submit(function(e) {
