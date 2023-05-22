@@ -72,6 +72,15 @@ class Content extends WebComponent {
 			$this->setBlock('HISTORY_MODAL_BLOCK', ['HISTORY_LIST' => new HistoryFeed($this->id)]);
 		}
 
+		// Duplicate
+		if ($service->user->getCurrentUser()->hasPermission('content-create')) {
+			$duplicateForm = new Create($content['html'], $content['scss'], $content['css'], $content['js']);
+			$duplicateForm->initialize();
+			$this->setVar('DUPLICATE_PAGE_FORM', $duplicateForm);
+			$this->setBlock('DUPLICATE_BTN_BLOCK');
+			$this->setBlock('DUPLICATE_MODAL_BLOCK');
+		}
+
 		// Version history restore
 		if (!is_null($version)) {
 			$this->setBlock('BACK_BTN_BLOCK', ['BACK_URL' => Url::build('page', 'content', ['id' => $this->id])]);
@@ -86,10 +95,7 @@ class Content extends WebComponent {
 		if ($service->user->getCurrentUser()->hasPermission('content-create')) {
 			$form = new Create();
 			$form->initialize();
-			$this->setComponent('NEW_PAGE_FORM', $form);
-			$duplicateForm = new Create($content['html'], $content['scss'], $content['css'], $content['js']);
-			$duplicateForm->initialize();
-			$this->setComponent('DUPLICATE_PAGE_FORM', $duplicateForm);
+			$this->setVar('NEW_PAGE_FORM', $form);
 			$this->setBlock('CREATE_BTN_BLOCK');
 			$this->setBlock('CREATE_MODAL_BLOCK');
 		}
