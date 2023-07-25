@@ -180,12 +180,21 @@ class Content extends WebComponent {
 
 		foreach ($elements as $element) {
 			$class = $element->getAttribute('data-sycomponent');
-			if (empty($class)) continue;
+			if (empty($class)) {
+				$this->logError('Class not specified');
+				continue;
+			}
 			$slot = $element->nodeValue;
-			if (empty($slot)) continue;
+			if (empty($slot) or strncmp($slot, '{', 1) !== 0 or substr($slot, -1) !== '}') {
+				$this->logError('Slot not specified');
+				continue;
+			}
 			$class = trim($class);
 			$slot = trim(trim($slot), '{}');
-			if (!class_exists($class)) continue;
+			if (!class_exists($class)) {
+				$this->logError("Class '$class' not found");
+				continue;
+			}
 
 			// Retrieve arguments from attribute data-sycomponent-args
 			try {
