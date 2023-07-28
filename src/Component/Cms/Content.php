@@ -185,12 +185,17 @@ class Content extends WebComponent {
 				continue;
 			}
 			$slot = $element->nodeValue;
-			if (empty($slot) or strncmp($slot, '{', 1) !== 0 or substr($slot, -1) !== '}') {
+			if (empty($slot)) {
 				$this->logError('Slot not specified');
 				continue;
 			}
+			$slot = trim($slot);
+			if (strncmp($slot, '{', 1) !== 0 or substr($slot, -1) !== '}') {
+				$this->logError('Slot must start with a { and end with a }');
+				continue;
+			}
 			$class = trim($class);
-			$slot = trim(trim($slot), '{}');
+			$slot = trim($slot, '{}');
 			if (!class_exists($class)) {
 				$this->logError("Class '$class' not found");
 				continue;
