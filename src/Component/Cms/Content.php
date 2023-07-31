@@ -162,7 +162,7 @@ class Content extends WebComponent {
 		}
 
 		// Add javascript code
-		$this->addJsCode($js);
+		$this->addJsCode($js, ['position' => WebComponent::JS_TOP]);
 	}
 
 	/**

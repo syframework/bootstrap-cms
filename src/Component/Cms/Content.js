@@ -242,13 +242,6 @@ $(function() {
 
 	$('#sy-code-modal form').submit(function(e) {
 		let code = ace.edit('codearea_codearea_js_{ID}').getValue();
-		try {
-			eval(code);
-		} catch (err) {
-			flash('JS code error', 'danger');
-			e.preventDefault();
-		}
-
 		this.js.value = code;
 		this.css.value = ace.edit('codearea_codearea_css_{ID}').getValue();
 	});
