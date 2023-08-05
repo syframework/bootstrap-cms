@@ -9,4 +9,5 @@ return [
 	'No history' => "Pas d'historique",
 	'Restore this version?' => 'Restaurer cette version ?',
 	'Duplicate page' => 'Dupliquer la page',
+	'No change detected' => 'Pas de changement détecté',
 ];
