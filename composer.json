@@ -5,7 +5,8 @@
 	"require": {
 		"php": ">=7",
 		"sy/bootstrap": "*",
-		"scssphp/scssphp": "*"
+		"scssphp/scssphp": "*",
+		"masterminds/html5": "^2.8"
 	},
 	"license": "MIT",
 	"authors": [

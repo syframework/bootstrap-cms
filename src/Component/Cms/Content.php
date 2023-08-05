@@ -49,6 +49,37 @@ class Content extends WebComponent {
 			throw new \Sy\Bootstrap\Application\Page\NotFoundException();
 		}
 
+		$mode = $this->get('mode', 'iframe');
+
+		if ($user->hasPermission('content-code') and $mode === 'iframe') {
+			// Developer mode
+			$this->initIframe();
+			$this->initToolbar($content);
+		} else {
+			// Init html css js
+			$this->initContent($content);
+
+			if (($user->hasPermission('content-update-inline') and !$user->hasPermission('content-code')) or ($user->hasPermission('content-code') and $mode === 'inline')) {
+				// Init toolbar
+				$this->initToolbar($content);
+			}
+		}
+	}
+
+	/**
+	 * For developer mode
+	 */
+	private function initIframe() {
+		$this->setVar('IFRAME_URL', Url::build('page', 'content', ['id' => $this->id, 'mode' => 'view']));
+		$this->setBlock('CONTENT_BLOCK');
+	}
+
+	/**
+	 * Init content html css and js
+	 *
+	 * @param array $content
+	 */
+	private function initContent($content) {
 		// TODO: maybe use a specific lang directory for CMS content
 		$html = new WebComponent();
 		$html->addTranslator(LANG_DIR);
@@ -65,15 +96,21 @@ class Content extends WebComponent {
 
 		// JS
 		if (!empty($content['js'])) $this->addJsCode($content['js']);
+	}
 
-		// Version history
-		if ($user->hasPermission('content-history-view')) {
-			$this->setBlock('HISTORY_BTN_BLOCK');
-			$this->setBlock('HISTORY_MODAL_BLOCK', ['HISTORY_LIST' => new HistoryFeed($this->id)]);
-		}
+	/**
+	 * Init toolbar
+	 *
+	 * @param array $content
+	 */
+	private function initToolbar($content) {
+		$service = \Project\Service\Container::getInstance();
+		$user = $service->user->getCurrentUser();
+		$version = $this->get('version');
+		$mode = $this->get('mode', 'iframe');
 
 		// Duplicate
-		if ($service->user->getCurrentUser()->hasPermission('content-create')) {
+		if ($user->hasPermission('content-create')) {
 			$duplicateForm = new Create($content['html'], $content['scss'], $content['css'], $content['js']);
 			$duplicateForm->initialize();
 			$this->setVar('DUPLICATE_PAGE_FORM', $duplicateForm);
@@ -92,7 +129,7 @@ class Content extends WebComponent {
 		}
 
 		// Create
-		if ($service->user->getCurrentUser()->hasPermission('content-create')) {
+		if ($user->hasPermission('content-create')) {
 			$form = new Create();
 			$form->initialize();
 			$this->setVar('NEW_PAGE_FORM', $form);
@@ -105,7 +142,7 @@ class Content extends WebComponent {
 		$js->setTemplateFile(__DIR__ . '/Content.js');
 
 		// Update inline
-		if ($service->user->getCurrentUser()->hasPermission('content-update-inline')) {
+		if ($user->hasPermission('content-update-inline')) {
 			$this->addJsLink(CKEDITOR_JS);
 			$js->setVars([
 				'ID'               => $content['id'],
@@ -123,21 +160,23 @@ class Content extends WebComponent {
 				'CSRF_URL'         => Url::build('api', 'csrf'),
 			]);
 			$js->setBlock('UPDATE_BLOCK');
-			$this->setBlock('UPDATE_INLINE_BTN_BLOCK');
+			if (!$user->hasPermission('content-code') or $mode === 'inline') {
+				$this->setBlock('UPDATE_INLINE_BTN_BLOCK');
+			}
 
 			// Ckeditor hidden fields css
 			$this->addCssCode('[data-sycomponent] .cke_hidden {display: none;}');
 		}
 
 		// Update
-		if ($service->user->getCurrentUser()->hasPermission('content-update')) {
+		if ($user->hasPermission('content-update')) {
 			$this->setComponent('UPDATE_PAGE_FORM', new Update($this->id));
 			$this->setBlock('UPDATE_BTN_BLOCK');
 			$this->setBlock('UPDATE_MODAL_BLOCK');
 		}
 
 		// Delete: the first content cannot be deleted
-		if ($service->user->getCurrentUser()->hasPermission('content-delete') and $this->id > 1) {
+		if ($user->hasPermission('content-delete') and $this->id > 1) {
 			$deleteForm = new \Sy\Bootstrap\Component\Form\Crud\Delete('content', ['id' => $this->id]);
 			$deleteForm->setAttribute('id', 'delete-' . $this->id);
 			$this->setComponent('DELETE_PAGE_FORM', $deleteForm);
@@ -150,7 +189,7 @@ class Content extends WebComponent {
 		}
 
 		// Code
-		if ($service->user->getCurrentUser()->hasPermission('content-code')) {
+		if ($user->hasPermission('content-code')) {
 			$this->setVars([
 				'CODE_FORM'    => new Code($this->id),
 				'CODE_FORM_ID' => 'code_form_' . $this->id,

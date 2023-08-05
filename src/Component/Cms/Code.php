@@ -1,6 +1,8 @@
 <?php
 namespace Sy\Bootstrap\Component\Cms;
 
+use Masterminds\HTML5;
+
 class Code extends \Sy\Bootstrap\Component\Form {
 
 	private $id;
@@ -92,6 +94,9 @@ class Code extends \Sy\Bootstrap\Component\Form {
 			$scss = $this->post('css');
 			$js   = $this->post('js');
 
+			// Check HTML
+			$html = $this->checkHtml($html);
+
 			// Compile scss
 			$compiler = new \ScssPhp\ScssPhp\Compiler();
 			$css = $compiler->compileString($scss)->getCss();
@@ -123,6 +128,12 @@ class Code extends \Sy\Bootstrap\Component\Form {
 			$this->setError('SCSS ' . $e->getMessage());
 			$this->fill($_POST);
 		}
+	}
+
+	private function checkHtml($html) {
+		$html5 = new HTML5();
+		$dom = $html5->loadHTMLFragment($html);
+		return $html5->saveHTML($dom);
 	}
 
 }

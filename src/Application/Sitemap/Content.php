@@ -16,6 +16,8 @@ class Content implements IProvider {
 
 	/**
 	 * Returns sitemap urls
+	 *
+	 * @return array
 	 */
 	public function getUrls() {
 		$urls = [];
