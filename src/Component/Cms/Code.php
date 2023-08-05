@@ -1,6 +1,8 @@
 <?php
 namespace Sy\Bootstrap\Component\Cms;
 
+use Masterminds\HTML5;
+
 class Code extends \Sy\Bootstrap\Component\Form {
 
 	private $id;
@@ -129,8 +131,9 @@ class Code extends \Sy\Bootstrap\Component\Form {
 	}
 
 	private function checkHtml($html) {
-		// TODO
-		return $html;
+		$html5 = new HTML5();
+		$dom = $html5->loadHTMLFragment($html);
+		return $html5->saveHTML($dom);
 	}
 
 }
