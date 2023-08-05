@@ -81,3 +81,22 @@ class Application extends \Sy\Bootstrap\Application {
 
 }
 ```
+
+## Add the content pages sitemap in Sitemap.php
+
+In ```protected/src/Application/Sitemap.php```
+
+```php
+<?php
+namespace Project\Application;
+
+class Sitemap extends \Sy\Bootstrap\Application\Sitemap {
+
+	public function __construct() {
+		parent::__construct();
+		$this->addProvider(new \Sy\Bootstrap\Application\Sitemap\Page());
+		$this->addProvider(new \Sy\Bootstrap\Application\Sitemap\Content()); // Add the content sitemap
+	}
+
+}
+```
