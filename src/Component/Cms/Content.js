@@ -117,7 +117,6 @@ $(function() {
 						extraPlugins: 'sharedspace,sycomponent,sywidget,tableresize,uploadimage,uploadfile',
 						allowedContent: true,
 						justifyClasses: [ 'text-left', 'text-center', 'text-right', 'text-justify' ],
-						disallowedContent: 'script; *[on*]; img{width,height}',
 						removePlugins: 'about',
 						templates: 'websyte',
 						templates_files: ['{CKEDITOR_ROOT}/templates.js'],

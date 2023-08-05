@@ -92,6 +92,9 @@ class Code extends \Sy\Bootstrap\Component\Form {
 			$scss = $this->post('css');
 			$js   = $this->post('js');
 
+			// Check HTML
+			$html = $this->checkHtml($html);
+
 			// Compile scss
 			$compiler = new \ScssPhp\ScssPhp\Compiler();
 			$css = $compiler->compileString($scss)->getCss();
@@ -123,6 +126,11 @@ class Code extends \Sy\Bootstrap\Component\Form {
 			$this->setError('SCSS ' . $e->getMessage());
 			$this->fill($_POST);
 		}
+	}
+
+	private function checkHtml($html) {
+		// TODO
+		return $html;
 	}
 
 }
