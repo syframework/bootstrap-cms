@@ -31,6 +31,21 @@ class Update extends \Sy\Bootstrap\Component\Form\Crud {
 		// Description
 		$this->getField('description')->setAttribute('maxlength', '256');
 
+		// Visibility
+		$service = \Project\Service\Container::getInstance();
+		$content = $service->content->retrieve(['id' => $this->id]);
+		$options = [
+			'private' => $this->_('Private'),
+			'public'  => $this->_('Public'),
+		];
+		$select = $this->getField('visibility');
+		foreach ($options as $value => $label) {
+			$o = $select->addOption($label, $value);
+			if ($content['visibility'] === $value) {
+				$o->setAttribute('selected', 'selected');
+			}
+		}
+
 		// User id
 		$service = \Project\Service\Container::getInstance();
 		$userId = $service->user->getCurrentUser()->id;
