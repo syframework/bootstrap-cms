@@ -17,23 +17,6 @@ class Content extends WebComponent {
 		$this->id = $id;
 
 		$service = \Project\Service\Container::getInstance();
-		$content = $service->content->retrieve(['id' => $id]);
-
-		// Set meta title, description and canonical
-		HeadData::setTitle(Str::escape($content['title']));
-		HeadData::setDescription(Str::escape($content['description']));
-		HeadData::setCanonical(PROJECT_URL . Url::build('page', 'content', ['id' => $id]));
-
-		$this->mount(function () {
-			$this->init();
-		});
-	}
-
-	private function init() {
-		$this->addTranslator(LANG_DIR . '/bootstrap-cms');
-		$this->setTemplateFile(__DIR__ . '/Content.html');
-
-		$service = \Project\Service\Container::getInstance();
 		$user = $service->user->getCurrentUser();
 
 		// Content version
@@ -41,7 +24,11 @@ class Content extends WebComponent {
 		if (!is_null($version) and $user->hasPermission('content-history-view')) {
 			$content = $service->contentHistory->retrieve(['id' => $this->id, 'crc32' => $version]);
 		} else {
-			$content = $service->content->retrieve(['id' => $this->id]);
+			$condition = ['id' => $this->id];
+			if (!$user->hasPermission('content-read')) {
+				$condition['visibility'] = 'public';
+			}
+			$content = $service->content->retrieve($condition);
 		}
 
 		// Content not found
@@ -49,6 +36,22 @@ class Content extends WebComponent {
 			throw new \Sy\Bootstrap\Application\Page\NotFoundException();
 		}
 
+		// Set meta title, description and canonical
+		HeadData::setTitle(Str::escape($content['title']));
+		HeadData::setDescription(Str::escape($content['description']));
+		HeadData::setCanonical(PROJECT_URL . Url::build('page', 'content', ['id' => $id]));
+
+		$this->mount(function () use ($content) {
+			$this->init($content);
+		});
+	}
+
+	private function init(array $content) {
+		$this->addTranslator(LANG_DIR . '/bootstrap-cms');
+		$this->setTemplateFile(__DIR__ . '/Content.html');
+
+		$service = \Project\Service\Container::getInstance();
+		$user = $service->user->getCurrentUser();
 		$mode = $this->get('mode', 'iframe');
 
 		if ($user->hasPermission('content-code') and $mode === 'iframe') {
