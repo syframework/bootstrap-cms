@@ -44,6 +44,10 @@ class Content extends WebComponent {
 		HeadData::setDescription(Str::escape($content['description']));
 		HeadData::setCanonical(PROJECT_URL . Url::build('page', 'content', ['id' => $id]));
 
+		if ($this->get('mode') === 'view') {
+			HeadData::setBase(target: '_parent');
+		}
+
 		$this->mount(function () use ($content) {
 			$this->init($content);
 		});
