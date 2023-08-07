@@ -13,6 +13,9 @@ class Content extends WebComponent {
 	 */
 	private $id;
 
+	/**
+	 * @param integer $id Content id
+	 */
 	public function __construct(int $id) {
 		$this->id = $id;
 
@@ -46,6 +49,9 @@ class Content extends WebComponent {
 		});
 	}
 
+	/**
+	 * @param array $content Content row
+	 */
 	private function init(array $content) {
 		$this->addTranslator(LANG_DIR . '/bootstrap-cms');
 		$this->setTemplateFile(__DIR__ . '/Content.html');
@@ -53,19 +59,19 @@ class Content extends WebComponent {
 		$service = \Project\Service\Container::getInstance();
 		$user = $service->user->getCurrentUser();
 		$mode = $this->get('mode', 'iframe');
+		$version = $this->get('version');
 
-		if ($user->hasPermission('content-code') and $mode === 'iframe') {
+		if ($user->hasPermission('content-code') and $mode === 'iframe' and is_null($version)) {
 			// Developer mode
 			$this->initIframe();
-			$this->initToolbar($content);
 		} else {
 			// Init html css js
 			$this->initContent($content);
+		}
 
-			if (($user->hasPermission('content-update-inline') and !$user->hasPermission('content-code')) or ($user->hasPermission('content-code') and $mode === 'inline')) {
-				// Init toolbar
-				$this->initToolbar($content);
-			}
+		// Init toolbar
+		if (($user->hasPermission('content-update-inline') and !$user->hasPermission('content-code')) or ($user->hasPermission('content-code') and $mode !== 'view')) {
+			$this->initToolbar($content);
 		}
 	}
 
@@ -111,6 +117,12 @@ class Content extends WebComponent {
 		$user = $service->user->getCurrentUser();
 		$version = $this->get('version');
 		$mode = $this->get('mode', 'iframe');
+
+		// Version history
+		if ($user->hasPermission('content-history-view')) {
+			$this->setBlock('HISTORY_BTN_BLOCK');
+			$this->setBlock('HISTORY_MODAL_BLOCK', ['HISTORY_LIST' => new HistoryFeed($this->id)]);
+		}
 
 		// Duplicate
 		if ($user->hasPermission('content-create')) {
