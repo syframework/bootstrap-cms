@@ -42,7 +42,7 @@ class Content implements IProvider {
 			} else {
 				$urls[] = ['loc' => PROJECT_URL . '/' . $content];
 			}
-		});
+		}, ['WHERE' => ['visibility' => 'public']]);
 
 		return $urls;
 	}
