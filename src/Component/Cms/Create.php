@@ -48,6 +48,12 @@ class Create extends \Sy\Bootstrap\Component\Form\Crud\Create {
 
 		// Description
 		$this->getField('description')->setAttribute('maxlength', '512');
+
+		// Visibility
+		$this->getField('visibility')->setOptions([
+			'private' => $this->_('Private'),
+			'public'  => $this->_('Public'),
+		]);
 	}
 
 	public function submitAction() {
