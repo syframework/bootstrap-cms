@@ -2,10 +2,22 @@
 namespace Sy\Bootstrap\Component\Cms;
 
 use Masterminds\HTML5;
+use Sy\Bootstrap\Component\Form\Element\CodeArea;
+use Sy\Bootstrap\Lib\Str;
 
 class Code extends \Sy\Bootstrap\Component\Form {
 
 	private $id;
+
+	/**
+	 * @var CodeArea
+	 */
+	private $cssArea;
+
+	/**
+	 * @var CodeArea
+	 */
+	private $jsArea;
 
 	public function __construct($id) {
 		parent::__construct();
@@ -28,7 +40,7 @@ class Code extends \Sy\Bootstrap\Component\Form {
 		$content = $service->content->retrieve(['id' => $this->id]);
 
 		// HTML
-		$htmlArea = new \Sy\Bootstrap\Component\Form\Element\CodeArea();
+		$htmlArea = new CodeArea();
 		$htmlArea->setAttributes([
 			'name'        => 'html',
 			'id'          => 'codearea_html_' . $this->id,
@@ -45,7 +57,7 @@ class Code extends \Sy\Bootstrap\Component\Form {
 		])->addElement($htmlArea);
 
 		// CSS
-		$cssArea = new \Sy\Bootstrap\Component\Form\Element\CodeArea();
+		$cssArea = new CodeArea();
 		$cssArea->setAttributes([
 			'name'        => 'css',
 			'id'          => 'codearea_css_' . $this->id,
@@ -53,9 +65,10 @@ class Code extends \Sy\Bootstrap\Component\Form {
 		]);
 		$cssArea->setMode('scss');
 		$cssArea->setTheme('monokai');
+		$this->cssArea = $cssArea;
 
 		if (!empty($content)) {
-			$cssArea->addText($content['scss']);
+			$cssArea->addText(Str::escape($content['scss']));
 		}
 
 		$this->addDiv([
@@ -66,7 +79,7 @@ class Code extends \Sy\Bootstrap\Component\Form {
 		])->addElement($cssArea);
 
 		// JS
-		$jsArea = new \Sy\Bootstrap\Component\Form\Element\CodeArea();
+		$jsArea = new CodeArea();
 		$jsArea->setAttributes([
 			'name'        => 'js',
 			'id'          => 'codearea_js_' . $this->id,
@@ -74,9 +87,10 @@ class Code extends \Sy\Bootstrap\Component\Form {
 		]);
 		$jsArea->setMode('javascript');
 		$jsArea->setTheme('monokai');
+		$this->jsArea = $jsArea;
 
 		if (!empty($content)) {
-			$jsArea->addText($content['js']);
+			$jsArea->addText(Str::escape($content['js']));
 		}
 
 		$this->addDiv([
@@ -115,18 +129,21 @@ class Code extends \Sy\Bootstrap\Component\Form {
 		} catch (\Sy\Component\Html\Form\Exception $e) {
 			$this->logWarning($e);
 			$this->setError($this->_('Please fill the form correctly'));
-			$this->fill($_POST);
+			$this->cssArea->setContent(Str::escape($scss));
+			$this->jsArea->setContent(Str::escape($js));
 		} catch (\Sy\Db\MySql\Exception $e) {
 			if ($e->getCode() === 1644) {
 				$this->setSuccess($this->_('No change detected'));
 			}
 			$this->logWarning($e);
 			$this->setError($this->_('Database error'));
-			$this->fill($_POST);
+			$this->cssArea->setContent(Str::escape($scss));
+			$this->jsArea->setContent(Str::escape($js));
 		} catch (\ScssPhp\ScssPhp\Exception\ParserException $e) {
 			$this->logWarning($e);
 			$this->setError('SCSS ' . $e->getMessage());
-			$this->fill($_POST);
+			$this->cssArea->setContent(Str::escape($scss));
+			$this->jsArea->setContent(Str::escape($js));
 		}
 	}
 
