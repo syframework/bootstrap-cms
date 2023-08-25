@@ -3,6 +3,7 @@ namespace Sy\Bootstrap\Component\Cms;
 
 use Masterminds\HTML5;
 use Sy\Bootstrap\Component\Form\Element\CodeArea;
+use Sy\Bootstrap\Lib\Str;
 
 class Code extends \Sy\Bootstrap\Component\Form {
 
@@ -67,7 +68,7 @@ class Code extends \Sy\Bootstrap\Component\Form {
 		$this->cssArea = $cssArea;
 
 		if (!empty($content)) {
-			$cssArea->addText($content['scss']);
+			$cssArea->addText(Str::escape($content['scss']));
 		}
 
 		$this->addDiv([
@@ -89,7 +90,7 @@ class Code extends \Sy\Bootstrap\Component\Form {
 		$this->jsArea = $jsArea;
 
 		if (!empty($content)) {
-			$jsArea->addText($content['js']);
+			$jsArea->addText(Str::escape($content['js']));
 		}
 
 		$this->addDiv([
@@ -128,21 +129,21 @@ class Code extends \Sy\Bootstrap\Component\Form {
 		} catch (\Sy\Component\Html\Form\Exception $e) {
 			$this->logWarning($e);
 			$this->setError($this->_('Please fill the form correctly'));
-			$this->cssArea->setContent($scss);
-			$this->jsArea->setContent($js);
+			$this->cssArea->setContent(Str::escape($scss));
+			$this->jsArea->setContent(Str::escape($js));
 		} catch (\Sy\Db\MySql\Exception $e) {
 			if ($e->getCode() === 1644) {
 				$this->setSuccess($this->_('No change detected'));
 			}
 			$this->logWarning($e);
 			$this->setError($this->_('Database error'));
-			$this->cssArea->setContent($scss);
-			$this->jsArea->setContent($js);
+			$this->cssArea->setContent(Str::escape($scss));
+			$this->jsArea->setContent(Str::escape($js));
 		} catch (\ScssPhp\ScssPhp\Exception\ParserException $e) {
 			$this->logWarning($e);
 			$this->setError('SCSS ' . $e->getMessage());
-			$this->cssArea->setContent($scss);
-			$this->jsArea->setContent($js);
+			$this->cssArea->setContent(Str::escape($scss));
+			$this->jsArea->setContent(Str::escape($js));
 		}
 	}
 
