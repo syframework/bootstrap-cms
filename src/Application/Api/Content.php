@@ -37,7 +37,8 @@ class Content extends \Sy\Bootstrap\Component\Api {
 
 		return $this->ok([
 			'status'  => 'ok',
-			'content' => $content['html'],
+			'html'    => $content['html'],
+			'js'      => $content['js'],
 		]);
 	}
 

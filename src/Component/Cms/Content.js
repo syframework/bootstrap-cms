@@ -47,8 +47,226 @@ $(function() {
 
 	CKEDITOR.dtd.$removeEmpty['span'] = false;
 	CKEDITOR.dtd.$removeEmpty['i'] = false;
-	CKEDITOR.plugins.addExternal('sycomponent', '{CKEDITOR_ROOT}/plugins/sycomponent/');
-	CKEDITOR.plugins.addExternal('sywidget', '{CKEDITOR_ROOT}/plugins/sywidget/');
+
+	// Widget SyComponent
+	let sycomponentslots = {};
+
+	CKEDITOR.plugins.add('sycomponent', {
+		requires: 'widget',
+		init: function(editor) {
+			editor.widgets.add('sycomponent', {
+				upcast: function(element) {
+					return (typeof element.attributes['data-sycomponent'] !== 'undefined' && element.attributes['data-sycomponent'].length > 0);
+				},
+				downcast: function(element) {
+					if (typeof element.attributes['data-sycomponent'] !== 'undefined' && element.attributes['data-sycomponent'].length > 0) {
+						let key = element.attributes['data-sycomponent'];
+						let args = element.attributes['data-sycomponent-args'];
+						if (args) key += args;
+						element.setHtml(sycomponentslots[btoa(key)]);
+						return element;
+					}
+				},
+				mask: true
+			});
+		}
+	});
+
+	// Widget SyTranslate
+	const sytranslations = {TRANSLATIONS};
+
+	function sytranslateset(key, value) {
+		fetch('{TRANSLATE_URL}', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded'
+			},
+			body: `key=${encodeURIComponent(key)}&value=${encodeURIComponent(value)}`
+		}).then(response => {
+			return response.json();
+		}).catch(error => console.error('There has been a problem with your fetch operation:', error));
+	}
+
+	CKEDITOR.dialog.add('sytranslate', function (editor) {
+		return {
+			title: '{LANGUAGE}',
+			minWidth: 300,
+			minHeight: 50,
+			contents: [
+				{
+					id: 'info',
+					elements: [
+						{
+							id: 'key',
+							type: 'text',
+							style: 'width: 100%',
+							label: '{TRANSLATE_KEY}',
+							'default': '',
+							required: true,
+							validate: function () {
+								if (!this.getValue()) return false;
+							},
+							setup: function( widget ) {
+								this.setValue( widget.data.name );
+							},
+							commit: function( widget ) {
+								widget.setData('name', this.getValue());
+							}
+						},
+						{
+							id: 'value',
+							type: 'text',
+							style: 'width: 100%',
+							label: '{TRANSLATE_VALUE}',
+							'default': '',
+							required: true,
+							validate: function () {
+								if (!this.getValue()) return false;
+							},
+							setup: function( widget ) {
+								this.setValue( widget.data.value );
+							},
+							commit: function( widget ) {
+								widget.setData('value', this.getValue());
+								document.querySelectorAll(`.sytranslate[data-key="${widget.data.name}"]`).forEach(function (element) {
+									element.innerText = widget.data.value;
+								});
+							}
+						}
+					]
+				}
+			]
+		};
+	});
+
+	CKEDITOR.plugins.add('sytranslate', {
+		requires: 'widget,dialog',
+
+		onLoad: function() {
+			// Register styles for placeholder widget frame.
+			CKEDITOR.addCss( '.sytranslate{background-color:#ff0}' );
+		},
+
+		init: function (editor) {
+			editor.widgets.add('sytranslate', {
+				dialog: 'sytranslate',
+
+				template: '<span class="sytranslate">{""}</span>',
+
+				init: function() {
+					var regex = /\{\".*\"\}/;
+					if (!regex.test(this.element.getText().trim())) return;
+
+					// Note that placeholder markup characters are stripped for the name.
+					var key = this.element.getText().slice( 2, -2 );
+					this.setData('name', key);
+					this.element.setAttribute('data-key', key);
+					var value = (key in sytranslations) ? sytranslations[key] : key;
+					this.setData('value', value);
+				},
+				downcast: function() {
+					return new CKEDITOR.htmlParser.text("{\"" + this.data.name + "\"}");
+				},
+				data: function() {
+					this.element.setAttribute('data-key', this.data.name);
+					this.element.setText(this.data.value);
+					sytranslateset(this.data.name, this.data.value);
+				},
+				mask: true
+			});
+
+			editor.ui.addButton( 'Sytranslate', {
+				label: '{ADD_TRANSLATE}',
+				command: 'sytranslate',
+				toolbar: 'insert,5',
+				icon: 'https://www.systemuicons.com/images/icons/create.svg'
+			} );
+		},
+
+		afterInit: function( editor ) {
+			var placeholderReplaceRegex = /\{\"([^\{\}])+\"\}/g;
+
+			editor.dataProcessor.dataFilter.addRules( {
+				text: function(text) {
+					return text.replace( placeholderReplaceRegex, function( match ) {
+						// Creating widget code.
+						var widgetWrapper = null,
+							innerElement = new CKEDITOR.htmlParser.element('span', {
+								'class': 'sytranslate'
+							});
+
+						// Adds placeholder identifier as innertext.
+						innerElement.add( new CKEDITOR.htmlParser.text( match ) );
+						widgetWrapper = editor.widgets.wrapElement( innerElement, 'sytranslate' );
+
+						// Return outerhtml of widget wrapper so it will be placed as replacement.
+						return widgetWrapper.getOuterHtml();
+					} );
+				}
+			} );
+		}
+	});
+
+	// Widget SyWidget
+	CKEDITOR.plugins.add('sywidget', {
+		requires: 'widget',
+		init: function(editor) {
+			editor.widgets.add('sywidget', {
+				upcast: function(element, data) {
+					if (typeof element.attributes['data-sylock'] !== 'undefined') {
+						if (element.attributes['data-sylock'] === 'attributes') {
+							storeAttributes(element);
+						} else {
+							data.html = element.getHtml();
+						}
+						return true;
+					}
+					return false;
+				},
+				downcast: function(element) {
+					if (typeof element.attributes['data-sylock-attributes'] !== 'undefined' && element.attributes['data-sylock'] === 'attributes') {
+						element.setHtml(this.editables.content.getData());
+						restoreAttributes(element);
+						var res = new CKEDITOR.htmlParser.element(element.name, element.attributes);
+						res.setHtml(element.getHtml());
+					} else {
+						var html = this.data.html;
+						var res = new CKEDITOR.htmlParser.element(element.name, element.attributes);
+						res.setHtml(html);
+					}
+					return res;
+				},
+				editables: {
+					content: '[data-sylock="attributes"]'
+				}
+			});
+		}
+	});
+
+	function storeAttributes(element) {
+		element.attributes['data-sylock-attributes'] = JSON.stringify(element.attributes);
+
+		if (typeof element.attributes['data-sylock'] !== 'undefined' && element.attributes['data-sylock'] !== 'attributes') return;
+
+		element.children.forEach(function (element) {
+			if (element.type === CKEDITOR.NODE_ELEMENT) {
+				storeAttributes(element);
+			}
+		});
+	}
+
+	function restoreAttributes(element) {
+		if (typeof element.attributes['data-sylock-attributes'] !== 'undefined') {
+			element.attributes = JSON.parse(element.attributes['data-sylock-attributes']);
+			delete element.attributes['data-sylock-attributes'];
+		}
+
+		element.children.forEach(function (element) {
+			if (element.type === CKEDITOR.NODE_ELEMENT) {
+				restoreAttributes(element);
+			}
+		});
+	}
 
 	function save(reload) {
 		$.post("{URL}", {
@@ -71,7 +289,7 @@ $(function() {
 		changed = false;
 	}
 
-	$('#sy-btn-page-update-start').click(function(e) {
+	$('#sy-btn-page-update-start').on('click', function(e) {
 		e.preventDefault();
 		$.getJSON('{GET_URL}', function(res) {
 			if (res.status === 'ok') {
@@ -85,7 +303,10 @@ $(function() {
 				});
 
 				// Replace current html by template source code
-				$('#sy-content').html(res.content);
+				$('#sy-content').html(res.html);
+
+				// Execute js code
+				eval(res.js);
 
 				// Replace slots by components
 				document.querySelectorAll('[data-sycomponent]').forEach(function (element) {
@@ -94,7 +315,7 @@ $(function() {
 					if (args) key += args;
 					if (sycomponents[btoa(key)]) {
 						let slot = element.innerHTML;
-						element.setAttribute('data-sycomponent-slot', slot);
+						sycomponentslots[btoa(key)] = slot;
 						element.innerHTML = sycomponents[btoa(key)];
 					}
 				});
@@ -102,10 +323,12 @@ $(function() {
 				$('#sy-content').attr('contenteditable', true);
 				if (!CKEDITOR.instances['sy-content']) {
 					var editor = CKEDITOR.inline('sy-content', {
+						language: '{LANG}',
 						entities: false,
 						title: false,
 						startupFocus: true,
 						linkShowAdvancedTab: false,
+						clipboard_handleImages: false,
 						filebrowserImageBrowseUrl: '{IMG_BROWSE}',
 						filebrowserImageUploadUrl: '{IMG_UPLOAD_AJAX}',
 						filebrowserBrowseUrl: '{FILE_BROWSE}',
@@ -114,10 +337,10 @@ $(function() {
 						filebrowserWindowHeight: 400,
 						imageUploadUrl: '{IMG_UPLOAD_AJAX}',
 						uploadUrl: '{FILE_UPLOAD_AJAX}',
-						extraPlugins: 'sharedspace,sycomponent,sywidget,tableresize,uploadimage,uploadfile',
+						extraPlugins: 'sharedspace,sycomponent,sywidget,sytranslate,tableresize,uploadimage,uploadfile',
 						allowedContent: true,
 						justifyClasses: [ 'text-left', 'text-center', 'text-right', 'text-justify' ],
-						removePlugins: 'about',
+						removePlugins: 'about,exportpdf',
 						templates: 'websyte',
 						templates_files: ['{CKEDITOR_ROOT}/templates.js'],
 						sharedSpaces: {
@@ -167,7 +390,7 @@ $(function() {
 						{ name: 'basicstyles', items: [ 'Bold', 'Italic', 'Underline', 'Strike' ] },
 						{ name: 'paragraph', items: [ 'NumberedList', 'BulletedList', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight' ] },
 						{ name: 'links', items: [ 'Link', 'Unlink' ] },
-						{ name: 'insert', items: [ 'Image', 'Table', 'HorizontalRule', 'Iframe' ] },
+						{ name: 'insert', items: [ 'Image', 'Table', 'HorizontalRule', 'Iframe', 'Sytranslate' ] },
 						{ name: 'styles', items: [ 'Format' ] },
 						{ name: 'colors', items: [ 'TextColor', 'BGColor' ] }
 					];
@@ -178,7 +401,7 @@ $(function() {
 		});
 	});
 
-	$('#sy-btn-page-update-stop').click(function(e) {
+	$('#sy-btn-page-update-stop').on('click', function(e) {
 		e.preventDefault();
 		if (changed) {
 			save(true);
@@ -200,14 +423,13 @@ $(function() {
 			return confirmationMessage;
 		}
 	});
-
 	<!-- END UPDATE_BLOCK -->
 
 	<!-- BEGIN DELETE_BLOCK -->
-	$('#sy-btn-page-delete').click(function(e) {
+	$('#sy-btn-page-delete').on('click', function(e) {
 		e.preventDefault();
 		if (confirm($('<div />').html("{CONFIRM_DELETE}").text())) {
-			$('#{DELETE_FORM_ID}').submit();
+			$('#{DELETE_FORM_ID}').trigger('submit');
 		}
 	});
 	<!-- END DELETE_BLOCK -->
@@ -239,7 +461,7 @@ $(function() {
 		});
 	});
 
-	$('#sy-code-modal form').submit(function(e) {
+	$('#sy-code-modal form').on('submit', function(e) {
 		let code = ace.edit('codearea_codearea_js_{ID}').getValue();
 		this.js.value = code;
 		this.css.value = ace.edit('codearea_codearea_css_{ID}').getValue();

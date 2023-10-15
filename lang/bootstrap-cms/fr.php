@@ -10,4 +10,9 @@ return [
 	'Restore this version?' => 'Restaurer cette version ?',
 	'Duplicate page' => 'Dupliquer la page',
 	'No change detected' => 'Pas de changement détecté',
+	'Version restored successfully' => 'Version restaurée avec succès',
+	'In english' => 'En français',
+	'Add new translation slot' => 'Ajouter un nouvel emplacement de traduction',
+	'Translation identifier' => 'Identifiant de la traduction',
+	'Translation value' => 'Valeur de la traduction',
 ];
