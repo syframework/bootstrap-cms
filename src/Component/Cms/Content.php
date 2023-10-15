@@ -58,6 +58,7 @@ class Content extends WebComponent {
 	 */
 	private function init(array $content) {
 		$this->addTranslator(LANG_DIR . '/bootstrap-cms');
+		$this->addTranslator(__DIR__ . '/../../../lang/bootstrap-cms');
 		$this->setTemplateFile(__DIR__ . '/Content.html');
 
 		$service = \Project\Service\Container::getInstance();
@@ -93,10 +94,16 @@ class Content extends WebComponent {
 	 * @param array $content
 	 */
 	private function initContent($content) {
-		// TODO: maybe use a specific lang directory for CMS content
 		$html = new WebComponent();
 		$html->addTranslator(LANG_DIR);
 		$html->setTemplateContent($content['html']);
+
+		// Load content translations
+		$service = \Project\Service\Container::getInstance();
+		$translations = $service->contentTranslation->retrieveAll(['WHERE' => ['lang' => $service->lang->getLang()]]);
+		foreach ($translations as $translation) {
+			$html->setVar($translation['key'], $translation['value']);
+		}
 
 		// Add web components in content
 		$this->initComponents($html, $content['html']);
@@ -163,6 +170,11 @@ class Content extends WebComponent {
 		// Update inline
 		if ($user->hasPermission('content-update-inline')) {
 			$this->addJsLink(CKEDITOR_JS);
+
+			// Retrieve translations data
+			$transArray = $service->contentTranslation->retrieveAll(['WHERE' => ['lang' => $service->lang->getLang()]]);
+			$translations = array_combine(array_column($transArray, 'key'), array_column($transArray, 'value'));
+
 			$js->setVars([
 				'ID'               => $content['id'],
 				'CSRF'             => $service->user->getCsrfToken(),
@@ -177,6 +189,13 @@ class Content extends WebComponent {
 				'CKEDITOR_ROOT'    => CKEDITOR_ROOT,
 				'GET_URL'          => Url::build('api', 'content', ['id' => $this->id]),
 				'CSRF_URL'         => Url::build('api', 'csrf'),
+				'LANG'             => $service->lang->getLang(),
+				'TRANSLATE_URL'    => Url::build('api', 'content-translation'),
+				'TRANSLATIONS'     => json_encode($translations),
+				'LANGUAGE'         => $this->_('In english'),
+				'ADD_TRANSLATE'    => $this->_('Add new translation slot'),
+				'TRANSLATE_KEY'    => $this->_('Translation identifier'),
+				'TRANSLATE_VALUE'  => $this->_('Translation value'),
 			]);
 			$js->setBlock('UPDATE_BLOCK');
 			if (!$user->hasPermission('content-code') or $mode === 'inline') {
