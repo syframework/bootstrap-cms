@@ -76,6 +76,7 @@ $(function() {
 	const sytranslations = {TRANSLATIONS};
 
 	function sytranslateset(key, value) {
+		if (!key || !value) return;
 		fetch('{TRANSLATE_URL}', {
 			method: 'POST',
 			headers: {
@@ -135,7 +136,10 @@ $(function() {
 						}
 					]
 				}
-			]
+			],
+			onOk: function() {
+				sytranslateset(this.getValueOf('info', 'key'), this.getValueOf('info', 'value'));
+			}
 		};
 	});
 
@@ -170,7 +174,6 @@ $(function() {
 				data: function() {
 					this.element.setAttribute('data-key', this.data.name);
 					this.element.setText(this.data.value);
-					sytranslateset(this.data.name, this.data.value);
 				},
 				mask: true
 			});
@@ -455,7 +458,7 @@ $(function() {
 		if (htmlLoaded) return;
 		$.getJSON('{GET_URL}', function(res) {
 			if (res.status === 'ok') {
-				ace.edit('codearea_codearea_html_{ID}').session.setValue(res.content);
+				ace.edit('codearea_codearea_html_{ID}').session.setValue(res.html);
 				htmlLoaded = true;
 			}
 		});
