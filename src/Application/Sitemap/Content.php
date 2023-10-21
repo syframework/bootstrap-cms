@@ -2,6 +2,7 @@
 namespace Sy\Bootstrap\Application\Sitemap;
 
 use Sy\Bootstrap\Lib\Url;
+use Sy\Bootstrap\Lib\Date;
 
 class Content implements IProvider {
 
@@ -25,22 +26,21 @@ class Content implements IProvider {
 		// Content pages
 		$service = \Project\Service\Container::getInstance();
 		$service->content->foreachRow(function($row) use(&$urls) {
-			$content = trim(Url::build('page', 'content', ['id' => $row['id']]), '/');
+			$date = new Date($row['updated_at']);
 			$alias = [];
 			foreach (LANGS as $lang => $label) {
-				$loc = \Sy\Bootstrap\Lib\Url\AliasManager::retrieveAlias($content, $lang);
-				if (is_null($loc)) continue;
-				$alias[$lang] = PROJECT_URL . '/' . $loc;
+				$alias[$lang] = PROJECT_URL . Url::build('page', 'content', ['id' => $row['id'], 'alias' => $row['alias'], 'lang' => $lang]);
 			}
 
 			if (count($alias) > 1) {
 				foreach ($alias as $lang => $loc) {
-					$urls[] = ['loc' => $loc, 'alternate' => $alias];
+					$urls[] = ['loc' => $loc, 'alternate' => $alias, 'lastmod' => $date->f('yyyy-MM-dd')];
 				}
-			} elseif (count($alias) === 1) {
-				$urls[] = ['loc' => array_pop($alias)];
 			} else {
-				$urls[] = ['loc' => PROJECT_URL . '/' . $content];
+				$urls[] = [
+					'loc'     => PROJECT_URL . Url::build('page', 'content', ['id' => $row['id'], 'alias' => $row['alias'], 'lang' => 'none']),
+					'lastmod' => $date->f('yyyy-MM-dd')
+				];
 			}
 		}, ['WHERE' => ['visibility' => 'public']]);
 

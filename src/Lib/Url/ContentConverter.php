@@ -27,20 +27,27 @@ class ContentConverter implements IConverter {
 		if ($params[ACTION_TRIGGER] !== 'content') return false;
 		unset($params[ACTION_TRIGGER]);
 
-		if (!empty($params['alias'])) {
-			$url = WEB_ROOT . '/' . $this->prefix . $params['slug'];
+		$url = WEB_ROOT . '/';
+		$service = \Project\Service\Container::getInstance();
+		if (!empty($params['lang']) and $service->lang->isAvailable($params['lang'])) {
+			$url .= $params['lang'] . '/';
+			unset($params['lang']);
+		}
+
+		if (isset($params['alias'])) {
+			$url .= $this->prefix . $params['alias'];
 			unset($params['alias']);
-			return $url . (empty($params) ? '' : '?' . http_build_query($params));
+			if (isset($params['id'])) unset($params['id']);
+			return rtrim($url, '/') . (empty($params) ? '' : '?' . http_build_query($params));
 		}
 
 		if (empty($params['id'])) return false;
 		$id = $params['id'];
 		unset($params['id']);
 
-		$service = \Project\Service\Container::getInstance();
 		$content = $service->content->retrieve(['id' => $id]);
 		if (empty($content)) return false;
-		return WEB_ROOT . '/' . $this->prefix . $content['alias'] . (empty($params) ? '' : '?' . http_build_query($params));
+		return rtrim($url . $this->prefix . $content['alias'], '/') . (empty($params) ? '' : '?' . http_build_query($params));
 	}
 
 	/**
@@ -48,9 +55,18 @@ class ContentConverter implements IConverter {
 	 */
 	public function urlToParams($url) {
 		$uri = parse_url($url, PHP_URL_PATH);
+		$uri = trim(substr($uri, strlen(WEB_ROOT) + 1), '/');
 		$queryString = parse_url($url, PHP_URL_QUERY);
 
-		list($alias) = sscanf(substr($uri, strlen(WEB_ROOT) + 1), $this->prefix . "%s");
+		// Check if there is the lang parameter
+		$parts = explode('/', $uri);
+		$service = \Project\Service\Container::getInstance();
+		if ($service->lang->isAvailable($parts[0])) {
+			$params['lang'] = $parts[0];
+			$uri = implode('/', array_slice($parts, 1));
+		}
+
+		list($alias) = sscanf($uri, $this->prefix . "%s");
 		if (empty($alias)) return false;
 
 		$service = \Project\Service\Container::getInstance();
