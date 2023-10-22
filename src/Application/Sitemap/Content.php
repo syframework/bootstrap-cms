@@ -39,7 +39,7 @@ class Content implements IProvider {
 			} else {
 				$urls[] = [
 					'loc'     => PROJECT_URL . Url::build('page', 'content', ['id' => $row['id'], 'alias' => $row['alias'], 'lang' => 'none']),
-					'lastmod' => $date->f('yyyy-MM-dd')
+					'lastmod' => $date->f('yyyy-MM-dd'),
 				];
 			}
 		}, ['WHERE' => ['visibility' => 'public']]);
