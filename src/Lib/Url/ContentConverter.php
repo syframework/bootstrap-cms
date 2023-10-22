@@ -33,6 +33,7 @@ class ContentConverter implements IConverter {
 			$url .= $params['lang'] . '/';
 			unset($params['lang']);
 		}
+		if (isset($params['lang'])) unset($params['lang']);
 
 		if (isset($params['alias'])) {
 			$url .= $this->prefix . $params['alias'];

@@ -19,5 +19,18 @@
 		"psr-4": {
 			"Sy\\Bootstrap\\": "src/"
 		}
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^10"
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"Sy\\Test\\": "tests/"
+		}
+	},
+	"scripts": {
+		"test": "phpunit --bootstrap tests/conf.php --coverage-text --coverage-filter src tests",
+		"mysql-start": "sudo docker run --name sytest-mysql --rm -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=sytest -d -p 127.0.0.1:3333:3306 mysql:latest",
+		"mysql-stop": "sudo docker stop sytest-mysql"
 	}
 }
