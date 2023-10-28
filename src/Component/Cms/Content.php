@@ -19,103 +19,109 @@ class Content extends WebComponent {
 	public function __construct(int $id) {
 		$this->id = $id;
 
-		$service = \Project\Service\Container::getInstance();
-		$user = $service->user->getCurrentUser();
-
-		// Content version
-		$version = $this->get('version');
-		if (!is_null($version) and $user->hasPermission('content-history-view')) {
-			$content = $service->contentHistory->retrieve(['id' => $this->id, 'crc32' => $version]);
-		} else {
-			$condition = ['id' => $this->id];
-			if (!$user->hasPermission('content-read')) {
-				$condition['visibility'] = 'public';
-			}
-			$content = $service->content->retrieve($condition);
-		}
-
-		// Content not found
-		if (empty($content)) {
-			throw new \Sy\Bootstrap\Application\Page\NotFoundException();
-		}
-
 		// Set meta title, description and canonical
+		$content = $this->getContent();
 		HeadData::setTitle(Str::escape($content['title']));
 		HeadData::setDescription(Str::escape($content['description']));
-		HeadData::setCanonical(PROJECT_URL . Url::build('page', 'content', ['id' => $id]));
-
-		if ($this->get('mode') === 'view') {
+		HeadData::setCanonical(PROJECT_URL . Url::build('page', 'content', ['id' => $this->id]));
+		if ($this->get('mode') === 'iframe') {
 			HeadData::setBase(target: '_parent');
 		}
 
-		$this->mount(function () use ($content) {
-			$this->init($content);
-		});
+		$this->mount(fn () => $this->init($content));
 	}
 
 	/**
-	 * @param array $content Content row
+	 * Init component
+	 *
+	 * @param array $content
 	 */
-	private function init(array $content) {
+	private function init($content) {
 		$this->addTranslator(LANG_DIR . '/bootstrap-cms');
 		$this->addTranslator(__DIR__ . '/../../../lang/bootstrap-cms');
 		$this->setTemplateFile(__DIR__ . '/Content.html');
 
 		$service = \Project\Service\Container::getInstance();
 		$user = $service->user->getCurrentUser();
-		$mode = $this->get('mode', 'iframe');
-		$version = $this->get('version');
 
-		if ($user->hasPermission('content-code') and $mode === 'iframe' and is_null($version)) {
-			// Developer mode
-			$this->initIframe();
-		} else {
-			// Init html css js
-			$this->initContent($content);
+		// User has a content related permission
+		if ($user->hasPermissionAmong(['content-create', 'content-delete', 'content-update', 'content-update-inline', 'content-code', 'content-history-view'])) {
+			if ($this->get('mode') === 'iframe') {
+				// Iframe view
+				$this->initIframe($content);
+			} else {
+				// Parent view
+				$this->initParent($content);
+			}
+			return;
 		}
 
-		// Init toolbar
-		if (($user->hasPermission('content-update-inline') and !$user->hasPermission('content-code')) or ($user->hasPermission('content-code') and $mode !== 'view')) {
-			$this->initToolbar($content);
-		}
+		// Read only view
+		$this->initContent($content);
 	}
 
 	/**
-	 * For developer mode
-	 */
-	private function initIframe() {
-		$this->setVar('IFRAME_URL', Url::build('page', 'content', ['id' => $this->id, 'mode' => 'view']));
-		$this->setBlock('CONTENT_BLOCK');
-	}
-
-	/**
-	 * Init content html css and js
+	 * Init the iframe view
 	 *
 	 * @param array $content
 	 */
-	private function initContent($content) {
-		$html = new WebComponent();
-		$html->addTranslator(LANG_DIR);
-		$html->setTemplateContent($content['html']);
+	private function initIframe($content) {
+		$this->initContent($content);
 
-		// Load content translations
+		// Javascript code
+		$js = new \Sy\Component();
+		$js->setTemplateFile(__DIR__ . '/Iframe.js');
+
+		// Retrieve translations data
 		$service = \Project\Service\Container::getInstance();
-		$translations = $service->contentTranslation->retrieveAll(['WHERE' => ['lang' => $service->lang->getLang()]]);
-		foreach ($translations as $translation) {
-			$html->setVar($translation['key'], $translation['value']);
-		}
+		$transArray = $service->contentTranslation->retrieveAll(['WHERE' => ['lang' => $service->lang->getLang()]]);
+		$translations = array_combine(array_column($transArray, 'key'), array_column($transArray, 'value'));
 
-		// Add web components in content
-		$this->initComponents($html, $content['html']);
-		$this->setVar('HTML', Str::convertTemplateSlot(strval($html)));
-		$this->mergeCss($html);
-		$this->mergeJs($html);
+		$js->setVars([
+			'ID'               => $content['id'],
+			'CSRF'             => $service->user->getCsrfToken(),
+			'URL'              => Url::build('api', 'content'),
+			'IMG_BROWSE'       => Url::build('editor', 'content/browse', ['id' => $this->id, 'type' => 'image']),
+			'IMG_UPLOAD'       => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'image']),
+			'FILE_BROWSE'      => Url::build('editor', 'content/browse', ['id' => $this->id, 'type' => 'file']),
+			'FILE_UPLOAD'      => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'file']),
+			'IMG_UPLOAD_AJAX'  => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'image', 'json' => '']),
+			'FILE_UPLOAD_AJAX' => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'file', 'json' => '']),
+			'CKEDITOR_ROOT'    => CKEDITOR_ROOT,
+			'GET_URL'          => Url::build('api', 'content', ['id' => $this->id]),
+			'CSRF_URL'         => Url::build('api', 'csrf'),
+			'LANG'             => $service->lang->getLang(),
+			'TRANSLATE_URL'    => Url::build('api', 'content-translation'),
+			'TRANSLATIONS'     => json_encode($translations),
+			'LANGUAGE'         => $this->_('In english'),
+			'ADD_TRANSLATE'    => $this->_('Add new translation slot'),
+			'TRANSLATE_KEY'    => $this->_('Translation identifier'),
+			'TRANSLATE_VALUE'  => $this->_('Translation value'),
+		]);
 
-		// CSS
-		if (!empty($content['css'])) $this->addCssCode($content['css']);
+		// Add javascript code
+		$this->addJsCode($js, ['position' => WebComponent::JS_TOP]);
+		$this->addJsLink(CKEDITOR_JS);
 
-		// JS
-		if (!empty($content['js'])) $this->addJsCode($content['js']);
+		// Ckeditor hidden fields css
+		$this->addCssCode('[data-sycomponent] .cke_hidden {display: none;}');
+
+		// Hide flash message
+		$this->addCssCode('#flash-message {display:none;}');
+	}
+
+	/**
+	 * Init the parent view
+	 *
+	 * @param array $content
+	 */
+	private function initParent($content) {
+		$this->setVar('IFRAME_URL', Url::build('page', 'content', ['id' => $this->id, 'mode' => 'iframe']));
+		$this->setBlock('CONTENT_BLOCK');
+		$this->initToolbar($content);
+
+		// Hide debug bar
+		$this->addCssCode('#sy_debug_bar {display:none;}');
 	}
 
 	/**
@@ -127,7 +133,6 @@ class Content extends WebComponent {
 		$service = \Project\Service\Container::getInstance();
 		$user = $service->user->getCurrentUser();
 		$version = $this->get('version');
-		$mode = $this->get('mode', 'iframe');
 
 		// Version history
 		if ($user->hasPermission('content-history-view')) {
@@ -165,45 +170,12 @@ class Content extends WebComponent {
 
 		// Javascript code
 		$js = new \Sy\Component();
-		$js->setTemplateFile(__DIR__ . '/Content.js');
+		$js->setTemplateFile(__DIR__ . '/Parent.js');
 
 		// Update inline
 		if ($user->hasPermission('content-update-inline')) {
-			$this->addJsLink(CKEDITOR_JS);
-
-			// Retrieve translations data
-			$transArray = $service->contentTranslation->retrieveAll(['WHERE' => ['lang' => $service->lang->getLang()]]);
-			$translations = array_combine(array_column($transArray, 'key'), array_column($transArray, 'value'));
-
-			$js->setVars([
-				'ID'               => $content['id'],
-				'CSRF'             => $service->user->getCsrfToken(),
-				'URL'              => Url::build('api', 'content'),
-				'WEB_ROOT'         => WEB_ROOT,
-				'IMG_BROWSE'       => Url::build('editor', 'content/browse', ['id' => $this->id, 'type' => 'image']),
-				'IMG_UPLOAD'       => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'image']),
-				'FILE_BROWSE'      => Url::build('editor', 'content/browse', ['id' => $this->id, 'type' => 'file']),
-				'FILE_UPLOAD'      => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'file']),
-				'IMG_UPLOAD_AJAX'  => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'image', 'json' => '']),
-				'FILE_UPLOAD_AJAX' => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'file', 'json' => '']),
-				'CKEDITOR_ROOT'    => CKEDITOR_ROOT,
-				'GET_URL'          => Url::build('api', 'content', ['id' => $this->id]),
-				'CSRF_URL'         => Url::build('api', 'csrf'),
-				'LANG'             => $service->lang->getLang(),
-				'TRANSLATE_URL'    => Url::build('api', 'content-translation'),
-				'TRANSLATIONS'     => json_encode($translations),
-				'LANGUAGE'         => $this->_('In english'),
-				'ADD_TRANSLATE'    => $this->_('Add new translation slot'),
-				'TRANSLATE_KEY'    => $this->_('Translation identifier'),
-				'TRANSLATE_VALUE'  => $this->_('Translation value'),
-			]);
 			$js->setBlock('UPDATE_BLOCK');
-			if (!$user->hasPermission('content-code') or $mode === 'inline') {
-				$this->setBlock('UPDATE_INLINE_BTN_BLOCK');
-			}
-
-			// Ckeditor hidden fields css
-			$this->addCssCode('[data-sycomponent] .cke_hidden {display: none;}');
+			$this->setBlock('UPDATE_INLINE_BTN_BLOCK');
 		}
 
 		// Update
@@ -233,6 +205,10 @@ class Content extends WebComponent {
 				'CODE_FORM_ID' => 'code_form_' . $this->id,
 			]);
 
+			$js->setVars([
+				'ID'      => $this->id,
+				'GET_URL' => Url::build('api', 'content', ['id' => $this->id]),
+			]);
 			$js->setBlock('CODE_BLOCK');
 			$this->setBlock('CODE_BTN_BLOCK');
 			$this->setBlock('CODE_MODAL_BLOCK');
@@ -240,6 +216,36 @@ class Content extends WebComponent {
 
 		// Add javascript code
 		$this->addJsCode($js, ['position' => WebComponent::JS_TOP]);
+	}
+
+	/**
+	 * Init content html css and js
+	 *
+	 * @param array $content
+	 */
+	private function initContent($content) {
+		$html = new WebComponent();
+		$html->addTranslator(LANG_DIR);
+		$html->setTemplateContent($content['html']);
+
+		// Load content translations
+		$service = \Project\Service\Container::getInstance();
+		$translations = $service->contentTranslation->retrieveAll(['WHERE' => ['lang' => $service->lang->getLang()]]);
+		foreach ($translations as $translation) {
+			$html->setVar($translation['key'], $translation['value']);
+		}
+
+		// Add web components in content
+		$this->initComponents($html, $content['html']);
+		$this->setVar('HTML', Str::convertTemplateSlot(strval($html)));
+		$this->mergeCss($html);
+		$this->mergeJs($html);
+
+		// CSS
+		if (!empty($content['css'])) $this->addCssCode($content['css']);
+
+		// JS
+		if (!empty($content['js'])) $this->addJsCode($content['js']);
 	}
 
 	/**
@@ -292,6 +298,36 @@ class Content extends WebComponent {
 				$this->logError($e);
 			}
 		}
+	}
+
+	/**
+	 * Retrieve content
+	 *
+	 * @throws \Sy\Bootstrap\Application\Page\NotFoundException
+	 * @return array
+	 */
+	private function getContent() {
+		$service = \Project\Service\Container::getInstance();
+		$user = $service->user->getCurrentUser();
+
+		// Content version
+		$version = $this->get('version');
+		if (!is_null($version) and $user->hasPermission('content-history-view')) {
+			$content = $service->contentHistory->retrieve(['id' => $this->id, 'crc32' => $version]);
+		} else {
+			$condition = ['id' => $this->id];
+			if (!$user->hasPermission('content-read')) {
+				$condition['visibility'] = 'public';
+			}
+			$content = $service->content->retrieve($condition);
+		}
+
+		// Content not found
+		if (empty($content)) {
+			throw new \Sy\Bootstrap\Application\Page\NotFoundException();
+		}
+
+		return $content;
 	}
 
 }
