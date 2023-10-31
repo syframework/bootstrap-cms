@@ -35,8 +35,9 @@ class Update extends \Sy\Bootstrap\Component\Form\Crud {
 		$service = \Project\Service\Container::getInstance();
 		$content = $service->content->retrieve(['id' => $this->id]);
 		$options = [
-			'private' => $this->_('Private'),
-			'public'  => $this->_('Public'),
+			'private'   => $this->_('Private page'),
+			'protected' => $this->_('Secret page'),
+			'public'    => $this->_('Public page'),
 		];
 		$select = $this->getField('visibility');
 		foreach ($options as $value => $label) {

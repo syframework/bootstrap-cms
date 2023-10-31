@@ -51,8 +51,9 @@ class Create extends \Sy\Bootstrap\Component\Form\Crud\Create {
 
 		// Visibility
 		$this->getField('visibility')->addOptions([
-			'private' => $this->_('Private'),
-			'public'  => $this->_('Public'),
+			'private'   => $this->_('Private page'),
+			'protected' => $this->_('Secret page'),
+			'public'    => $this->_('Public page'),
 		]);
 	}
 

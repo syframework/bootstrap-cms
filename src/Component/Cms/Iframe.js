@@ -1,49 +1,7 @@
-(function ($) {
-	$.fn.drags = function (opt) {
-
-		opt = $.extend({ handle: "", cursor: "move" }, opt);
-
-		if (opt.handle === "") {
-			var $el = this;
-		} else {
-			var $el = this.find(opt.handle);
-		}
-
-		return $el.css('cursor', opt.cursor).on("mousedown", function (e) {
-			if (opt.handle === "") {
-				var $drag = $(this).addClass('draggable');
-			} else {
-				var $drag = $(this).addClass('active-handle').parent().addClass('draggable');
-			}
-			var z_idx = $drag.css('z-index'),
-				drg_h = $drag.outerHeight(),
-				drg_w = $drag.outerWidth(),
-				pos_y = $drag.offset().top + drg_h - e.pageY,
-				pos_x = $drag.offset().left + drg_w - e.pageX;
-			$drag.css('z-index', 1060).parents().on("mousemove", function (e) {
-				$('.draggable').offset({
-					top: e.pageY + pos_y - drg_h,
-					left: e.pageX + pos_x - drg_w
-				}).on("mouseup", function () {
-					$(this).removeClass('draggable').css('z-index', z_idx);
-				});
-			});
-			e.preventDefault(); // disable selection
-		}).on("mouseup", function () {
-			if (opt.handle === "") {
-				$(this).removeClass('draggable');
-			} else {
-				$(this).removeClass('active-handle').parent().removeClass('draggable');
-			}
-		});
-
-	}
-})(jQuery);
-
 (function () {
 
 	var changed = false;
-	var csrf = "{CSRF}";
+	var csrf = '{CSRF}';
 
 	CKEDITOR.dtd.$removeEmpty['span'] = false;
 	CKEDITOR.dtd.$removeEmpty['i'] = false;
@@ -53,12 +11,12 @@
 
 	CKEDITOR.plugins.add('sycomponent', {
 		requires: 'widget',
-		init: function(editor) {
+		init: function (editor) {
 			editor.widgets.add('sycomponent', {
-				upcast: function(element) {
+				upcast: function (element) {
 					return (typeof element.attributes['data-sycomponent'] !== 'undefined' && element.attributes['data-sycomponent'].length > 0);
 				},
-				downcast: function(element) {
+				downcast: function (element) {
 					if (typeof element.attributes['data-sycomponent'] !== 'undefined' && element.attributes['data-sycomponent'].length > 0) {
 						let key = element.attributes['data-sycomponent'];
 						let args = element.attributes['data-sycomponent-args'];
@@ -107,10 +65,10 @@
 							validate: function () {
 								if (!this.getValue()) return false;
 							},
-							setup: function( widget ) {
-								this.setValue( widget.data.name );
+							setup: function (widget) {
+								this.setValue(widget.data.name);
 							},
-							commit: function( widget ) {
+							commit: function (widget) {
 								widget.setData('name', this.getValue());
 							}
 						},
@@ -124,10 +82,10 @@
 							validate: function () {
 								if (!this.getValue()) return false;
 							},
-							setup: function( widget ) {
-								this.setValue( widget.data.value );
+							setup: function (widget) {
+								this.setValue(widget.data.value);
 							},
-							commit: function( widget ) {
+							commit: function (widget) {
 								widget.setData('value', this.getValue());
 								document.querySelectorAll(`.sytranslate[data-key="${widget.data.name}"]`).forEach(function (element) {
 									element.innerText = widget.data.value;
@@ -137,7 +95,7 @@
 					]
 				}
 			],
-			onOk: function() {
+			onOk: function () {
 				sytranslateset(this.getValueOf('info', 'key'), this.getValueOf('info', 'value'));
 			}
 		};
@@ -146,9 +104,9 @@
 	CKEDITOR.plugins.add('sytranslate', {
 		requires: 'widget,dialog',
 
-		onLoad: function() {
+		onLoad: function () {
 			// Register styles for placeholder widget frame.
-			CKEDITOR.addCss( '.sytranslate{background-color:#ff0}' );
+			CKEDITOR.addCss('.sytranslate{border: 1px dashed #ccc}');
 		},
 
 		init: function (editor) {
@@ -157,41 +115,41 @@
 
 				template: '<span class="sytranslate">{""}</span>',
 
-				init: function() {
+				init: function () {
 					var regex = /\{\".*\"\}/;
 					if (!regex.test(this.element.getText().trim())) return;
 
 					// Note that placeholder markup characters are stripped for the name.
-					var key = this.element.getText().slice( 2, -2 );
+					var key = this.element.getText().slice(2, -2);
 					this.setData('name', key);
 					this.element.setAttribute('data-key', key);
 					var value = (key in sytranslations) ? sytranslations[key] : key;
 					this.setData('value', value);
 				},
-				downcast: function() {
+				downcast: function () {
 					return new CKEDITOR.htmlParser.text("{\"" + this.data.name + "\"}");
 				},
-				data: function() {
+				data: function () {
 					this.element.setAttribute('data-key', this.data.name);
 					this.element.setText(this.data.value);
 				},
 				mask: true
 			});
 
-			editor.ui.addButton( 'Sytranslate', {
+			editor.ui.addButton('Sytranslate', {
 				label: '{ADD_TRANSLATE}',
 				command: 'sytranslate',
 				toolbar: 'insert,5',
 				icon: 'https://www.systemuicons.com/images/icons/create.svg'
-			} );
+			});
 		},
 
-		afterInit: function( editor ) {
+		afterInit: function (editor) {
 			var placeholderReplaceRegex = /\{\"([^\{\}])+\"\}/g;
 
-			editor.dataProcessor.dataFilter.addRules( {
-				text: function(text) {
-					return text.replace( placeholderReplaceRegex, function( match ) {
+			editor.dataProcessor.dataFilter.addRules({
+				text: function (text) {
+					return text.replace(placeholderReplaceRegex, function (match) {
 						// Creating widget code.
 						var widgetWrapper = null,
 							innerElement = new CKEDITOR.htmlParser.element('span', {
@@ -199,23 +157,23 @@
 							});
 
 						// Adds placeholder identifier as innertext.
-						innerElement.add( new CKEDITOR.htmlParser.text( match ) );
-						widgetWrapper = editor.widgets.wrapElement( innerElement, 'sytranslate' );
+						innerElement.add(new CKEDITOR.htmlParser.text(match));
+						widgetWrapper = editor.widgets.wrapElement(innerElement, 'sytranslate');
 
 						// Return outerhtml of widget wrapper so it will be placed as replacement.
 						return widgetWrapper.getOuterHtml();
-					} );
+					});
 				}
-			} );
+			});
 		}
 	});
 
 	// Widget SyWidget
 	CKEDITOR.plugins.add('sywidget', {
 		requires: 'widget',
-		init: function(editor) {
+		init: function (editor) {
 			editor.widgets.add('sywidget', {
-				upcast: function(element, data) {
+				upcast: function (element, data) {
 					if (typeof element.attributes['data-sylock'] !== 'undefined') {
 						if (element.attributes['data-sylock'] === 'attributes') {
 							storeAttributes(element);
@@ -226,7 +184,7 @@
 					}
 					return false;
 				},
-				downcast: function(element) {
+				downcast: function (element) {
 					if (typeof element.attributes['data-sylock-attributes'] !== 'undefined' && element.attributes['data-sylock'] === 'attributes') {
 						element.setHtml(this.editables.content.getData());
 						restoreAttributes(element);
@@ -271,136 +229,183 @@
 		});
 	}
 
+	function draggable(element) {
+		var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+		element.onmousedown = dragMouseDown;
+
+		function dragMouseDown(e) {
+			e = e || window.event;
+			e.preventDefault();
+			pos3 = e.clientX;
+			pos4 = e.clientY;
+			document.onmouseup = closeDragElement;
+			document.onmousemove = elementDrag;
+		}
+
+		function elementDrag(e) {
+			e = e || window.event;
+			e.preventDefault();
+			pos1 = pos3 - e.clientX;
+			pos2 = pos4 - e.clientY;
+			pos3 = e.clientX;
+			pos4 = e.clientY;
+			element.style.top = (element.offsetTop - pos2) + 'px';
+			element.style.left = (element.offsetLeft - pos1) + 'px';
+		}
+
+		function closeDragElement() {
+			document.onmouseup = null;
+			document.onmousemove = null;
+		}
+	}
+
 	function save(reload) {
-		$.post("{URL}", {
+		let data = {
 			id: "{ID}",
 			csrf: csrf,
 			content: CKEDITOR.instances['sy-content'].getData()
-		}, function(res) {
-			if (res.status === 'ko') {
-				alert($('<p/>').html(res.message).text());
-				if (res.csrf) {
-					csrf = res.csrf;
-					changed = true;
-				} else {
+		};
+
+		fetch('{URL}', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded'
+			},
+			body: Object.keys(data).map(key => `${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`).join("&")
+		})
+			.then(response => response.json())
+			.then(res => {
+				if (res.status === 'ko') {
+					alert((new DOMParser).parseFromString(res.message, 'text/html').documentElement.textContent);
+					if (res.csrf) {
+						csrf = res.csrf;
+						changed = true;
+					} else {
+						location.reload(true);
+					}
+				} else if (reload) {
 					location.reload(true);
 				}
-			} else if (reload) {
-				location.reload(true);
-			}
-		}, 'json');
+				window.parent.postMessage('saved', '*');
+			})
+			.catch((error) => {
+				console.error('Error:', error);
+			});
 		changed = false;
 	}
 
 	function startEdit() {
 		var timestamp = new Date().getTime();
-		$.getJSON('{GET_URL}&ts=' + timestamp, function(res) {
-			if (res.status === 'ok') {
-				// Extract sycomponents
-				let sycomponents = {};
-				document.querySelectorAll('[data-sycomponent]').forEach(function (element) {
-					let key = element.getAttribute('data-sycomponent');
-					let args = element.getAttribute('data-sycomponent-args');
-					if (args) key += args;
-					sycomponents[btoa(key)] = element.innerHTML;
-				});
+		fetch('{GET_URL}&ts=' + timestamp)
+			.then(response => response.json())
+			.then(res => {
+				if (res.status === 'ok') {
+					// Extract sycomponents
+					let sycomponents = {};
+					document.querySelectorAll('[data-sycomponent]').forEach(function (element) {
+						let key = element.getAttribute('data-sycomponent');
+						let args = element.getAttribute('data-sycomponent-args');
+						if (args) key += args;
+						sycomponents[btoa(key)] = element.innerHTML;
+					});
 
-				// Replace current html by template source code
-				$('#sy-content').html(res.html);
+					// Replace current html by template source code
+					document.getElementById('sy-content').innerHTML = res.html;
 
-				// Replace slots by components
-				document.querySelectorAll('[data-sycomponent]').forEach(function (element) {
-					let key = element.getAttribute('data-sycomponent');
-					let args = element.getAttribute('data-sycomponent-args');
-					if (args) key += args;
-					if (sycomponents[btoa(key)]) {
-						let slot = element.innerHTML;
-						sycomponentslots[btoa(key)] = slot;
-						element.innerHTML = sycomponents[btoa(key)];
-					}
-				});
-
-				// Execute js code
-				eval(res.js);
-				window.dispatchEvent(new Event('load'));
-
-				$('#sy-content').attr('contenteditable', true);
-				if (!CKEDITOR.instances['sy-content']) {
-					var editor = CKEDITOR.inline('sy-content', {
-						language: '{LANG}',
-						entities: false,
-						title: false,
-						startupFocus: true,
-						linkShowAdvancedTab: false,
-						clipboard_handleImages: false,
-						filebrowserImageBrowseUrl: '{IMG_BROWSE}',
-						filebrowserImageUploadUrl: '{IMG_UPLOAD_AJAX}',
-						filebrowserBrowseUrl: '{FILE_BROWSE}',
-						filebrowserUploadUrl: '{FILE_UPLOAD_AJAX}',
-						filebrowserWindowWidth: 200,
-						filebrowserWindowHeight: 400,
-						imageUploadUrl: '{IMG_UPLOAD_AJAX}',
-						uploadUrl: '{FILE_UPLOAD_AJAX}',
-						extraPlugins: 'sharedspace,sycomponent,sywidget,sytranslate,tableresize,uploadimage,uploadfile',
-						allowedContent: true,
-						justifyClasses: [ 'text-left', 'text-center', 'text-right', 'text-justify' ],
-						removePlugins: 'about,exportpdf',
-						templates: 'websyte',
-						templates_files: ['{CKEDITOR_ROOT}/templates.js'],
-						sharedSpaces: {
-							top: 'sy-page-topbar',
-							bottom: 'sy-page-bottombar'
-						},
-						on: {
-							instanceReady: function (ev) {
-								this.dataProcessor.writer.setRules('p', {
-									indent: true,
-									breakBeforeOpen: true,
-									breakAfterOpen: true,
-									breakBeforeClose: true,
-									breakAfterClose: true
-								});
-								this.dataProcessor.writer.setRules('div', {
-									indent: true,
-									breakBeforeOpen: true,
-									breakAfterOpen: true,
-									breakBeforeClose: true,
-									breakAfterClose: true
-								});
-								this.dataProcessor.htmlFilter.addRules({
-									elements: {
-										img: function(el) {
-											el.addClass('img-fluid');
-										}
-									}
-								});
-								$('#sy-page-topbar').drags();
-							}
+					// Replace slots by components
+					document.querySelectorAll('[data-sycomponent]').forEach(function (element) {
+						let key = element.getAttribute('data-sycomponent');
+						let args = element.getAttribute('data-sycomponent-args');
+						if (args) key += args;
+						if (sycomponents[btoa(key)]) {
+							let slot = element.innerHTML;
+							sycomponentslots[btoa(key)] = slot;
+							element.innerHTML = sycomponents[btoa(key)];
 						}
 					});
 
-					editor.on('blur', function() {
-						if (changed) save();
-					});
+					// Execute js code
+					eval(res.js);
+					window.dispatchEvent(new Event('load'));
 
-					editor.on('change', function() {
-						changed = true;
-					});
+					document.getElementById('sy-content').setAttribute('contenteditable', 'true');
+					if (!CKEDITOR.instances['sy-content']) {
+						var editor = CKEDITOR.inline('sy-content', {
+							language: '{LANG}',
+							entities: false,
+							title: false,
+							startupFocus: true,
+							linkShowAdvancedTab: false,
+							clipboard_handleImages: false,
+							filebrowserImageBrowseUrl: '{IMG_BROWSE}',
+							filebrowserImageUploadUrl: '{IMG_UPLOAD_AJAX}',
+							filebrowserBrowseUrl: '{FILE_BROWSE}',
+							filebrowserUploadUrl: '{FILE_UPLOAD_AJAX}',
+							filebrowserWindowWidth: 200,
+							filebrowserWindowHeight: 400,
+							imageUploadUrl: '{IMG_UPLOAD_AJAX}',
+							uploadUrl: '{FILE_UPLOAD_AJAX}',
+							extraPlugins: 'sharedspace,sycomponent,sywidget,sytranslate,tableresize,uploadimage,uploadfile',
+							allowedContent: true,
+							justifyClasses: ['text-left', 'text-center', 'text-right', 'text-justify'],
+							removePlugins: 'about,exportpdf',
+							templates: 'websyte',
+							templates_files: ['{CKEDITOR_ROOT}/templates.js'],
+							sharedSpaces: {
+								top: 'sy-page-topbar',
+								bottom: 'sy-page-bottombar'
+							},
+							on: {
+								instanceReady: function (ev) {
+									this.dataProcessor.writer.setRules('p', {
+										indent: true,
+										breakBeforeOpen: true,
+										breakAfterOpen: true,
+										breakBeforeClose: true,
+										breakAfterClose: true
+									});
+									this.dataProcessor.writer.setRules('div', {
+										indent: true,
+										breakBeforeOpen: true,
+										breakAfterOpen: true,
+										breakBeforeClose: true,
+										breakAfterClose: true
+									});
+									this.dataProcessor.htmlFilter.addRules({
+										elements: {
+											img: function (el) {
+												el.addClass('img-fluid');
+											}
+										}
+									});
+									draggable(document.getElementById('sy-page-topbar'));
+								}
+							}
+						});
 
-					editor.config.toolbar = [
-						{ name: 'document', items: [ 'Templates' ] },
-						{ name: 'clipboard', items: [ 'Undo', 'Redo' ] },
-						{ name: 'editing', items: [ 'Find', 'Replace', 'Scayt' ] },
-						{ name: 'basicstyles', items: [ 'Bold', 'Italic', 'Underline', 'Strike' ] },
-						{ name: 'paragraph', items: [ 'NumberedList', 'BulletedList', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight' ] },
-						{ name: 'links', items: [ 'Link', 'Unlink' ] },
-						{ name: 'insert', items: [ 'Image', 'Table', 'HorizontalRule', 'Iframe', 'Sytranslate' ] },
-						{ name: 'styles', items: [ 'Format' ] },
-						{ name: 'colors', items: [ 'TextColor', 'BGColor' ] }
-					];
+						editor.on('blur', function () {
+							if (changed) save();
+						});
+
+						editor.on('change', function () {
+							changed = true;
+						});
+
+						editor.config.toolbar = [
+							{ name: 'document', items: ['Templates'] },
+							{ name: 'clipboard', items: ['Undo', 'Redo'] },
+							{ name: 'editing', items: ['Find', 'Replace', 'Scayt'] },
+							{ name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike'] },
+							{ name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight'] },
+							{ name: 'links', items: ['Link', 'Unlink'] },
+							{ name: 'insert', items: ['Image', 'Table', 'HorizontalRule', 'Iframe', 'Sytranslate'] },
+							{ name: 'styles', items: ['Format'] },
+							{ name: 'colors', items: ['TextColor', 'BGColor'] }
+						];
+					}
 				}
-			}
-		});
+			})
+			.catch(error => console.error('Error:', error));
 	}
 
 	function stopEdit() {
@@ -411,7 +416,7 @@
 		}
 	}
 
-	window.addEventListener('message', function(event) {
+	window.addEventListener('message', function (event) {
 		switch (event.data) {
 			case 'start':
 				startEdit();
@@ -423,18 +428,25 @@
 		}
 	}, false);
 
-	setInterval(function() {
+	setInterval(function () {
 		fetch('{CSRF_URL}').then(response => response.json()).then(data => {
 			csrf = data.csrf;
 		});
 	}, 1200000);
 
-	window.addEventListener("beforeunload", function (e) {
+	window.addEventListener('beforeunload', function (e) {
 		if (changed) {
 			var confirmationMessage = 'Unsaved changes';
 			e.returnValue = confirmationMessage;
 			return confirmationMessage;
 		}
+	});
+
+	// Prevent navigation on empty href links
+	document.querySelectorAll('a[href="#"],a[href=""]').forEach(function (link) {
+		link.addEventListener('click', function (e) {
+			e.preventDefault();
+		});
 	});
 
 })();

@@ -15,4 +15,7 @@ return [
 	'Add new translation slot' => 'Ajouter un nouvel emplacement de traduction',
 	'Translation identifier' => 'Identifiant de la traduction',
 	'Translation value' => 'Valeur de la traduction',
+	'Private page' => 'Page privée',
+	'Secret page' => 'Page secrète (publique mais non indexée dans les moteurs de recherche)',
+	'Public page' => 'Page publique',
 ];

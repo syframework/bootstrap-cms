@@ -27,6 +27,9 @@ class Content extends WebComponent {
 		if ($this->get('mode') === 'iframe') {
 			HeadData::setBase(target: '_parent');
 		}
+		if ($content['visibility'] !== 'public') {
+			HeadData::addMeta('robots', 'noindex');
+		}
 
 		$this->mount(fn () => $this->init($content));
 	}
@@ -122,6 +125,9 @@ class Content extends WebComponent {
 
 		// Hide debug bar
 		$this->addCssCode('#sy_debug_bar {display:none;}');
+
+		// Toolbar with a high z-index
+		$this->addCssCode('#sy-page-toolbar {z-index:9999999;}');
 	}
 
 	/**

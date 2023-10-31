@@ -1,34 +1,32 @@
 (function () {
 
 	<!-- BEGIN UPDATE_BLOCK -->
-	$('#sy-btn-page-update-start').on('click', function(e) {
+	document.getElementById('sy-btn-page-update-start').addEventListener('click', function(e) {
 		e.preventDefault();
-
 		var frame = document.getElementById('sy-content-iframe');
 		if (frame) {
 			frame.contentWindow.postMessage('start', '*');
-			$('#sy-btn-page-update-start').hide();
-			$('#sy-btn-page-update-stop').removeClass("d-none");
+			document.getElementById('sy-btn-page-update-start').classList.add("d-none");
+			document.getElementById('sy-btn-page-update-stop').classList.remove("d-none");
 		}
 	});
 
-	$('#sy-btn-page-update-stop').on('click', function(e) {
+	document.getElementById('sy-btn-page-update-stop').addEventListener('click', function(e) {
 		e.preventDefault();
 		var frame = document.getElementById('sy-content-iframe');
 		if (frame) {
 			frame.contentWindow.postMessage('stop', '*');
-			$('#sy-btn-page-update-start').show();
-			$('#sy-btn-page-update-stop').addClass("d-none");
-			htmlLoaded = false;
+			document.getElementById('sy-btn-page-update-start').classList.remove("d-none");
+			document.getElementById('sy-btn-page-update-stop').classList.add("d-none");
 		}
 	});
 	<!-- END UPDATE_BLOCK -->
 
 	<!-- BEGIN DELETE_BLOCK -->
-	$('#sy-btn-page-delete').on('click', function(e) {
+	document.getElementById('sy-btn-page-delete').addEventListener('click', function(e) {
 		e.preventDefault();
-		if (confirm($('<div />').html("{CONFIRM_DELETE}").text())) {
-			$('#{DELETE_FORM_ID}').trigger('submit');
+		if (confirm((new DOMParser).parseFromString('{CONFIRM_DELETE}', 'text/html').documentElement.textContent)) {
+			document.getElementById('{DELETE_FORM_ID}').dispatchEvent(new Event('submit'));
 		}
 	});
 	<!-- END DELETE_BLOCK -->
@@ -36,47 +34,67 @@
 	<!-- BEGIN CODE_BLOCK -->
 	let htmlLoaded = false;
 
+	window.addEventListener("message", (event) => {
+		if (event.data === 'saved') {
+			htmlLoaded = false;
+		}
+	}, false);
+
 	function resizeCodeArea() {
-		let codeEditorHeight = window.innerHeight - $('#sy-code-modal').find('.modal-header').outerHeight() - $('#sy-code-modal').find('.modal-footer').outerHeight();
-		$('#codearea_codearea_html_{ID}').height(codeEditorHeight);
+		let modalHeaderHeight = document.querySelector('#sy-code-modal .modal-header').offsetHeight;
+		let modalFooterHeight = document.querySelector('#sy-code-modal .modal-footer').offsetHeight;
+		let codeEditorHeight = window.innerHeight - modalHeaderHeight - modalFooterHeight;
+
+		let htmlEditor = document.querySelector('#codearea_codearea_html_{ID}');
+		htmlEditor.style.height = codeEditorHeight + 'px';
 		ace.edit('codearea_codearea_html_{ID}').resize();
-		$('#codearea_codearea_css_{ID}').height(codeEditorHeight);
+
+		let cssEditor = document.querySelector('#codearea_codearea_css_{ID}');
+		cssEditor.style.height = codeEditorHeight + 'px';
 		ace.edit('codearea_codearea_css_{ID}').resize();
-		$('#codearea_codearea_js_{ID}').height(codeEditorHeight);
+
+		let jsEditor = document.querySelector('#codearea_codearea_js_{ID}');
+		jsEditor.style.height = codeEditorHeight + 'px';
 		ace.edit('codearea_codearea_js_{ID}').resize();
 	}
 
 	window.addEventListener('resize', resizeCodeArea);
 
-	$('#sy-code-modal').on('shown.bs.modal', function (e) {
+	document.getElementById('sy-code-modal').addEventListener('shown.bs.modal', function (e) {
 		resizeCodeArea();
 
 		if (htmlLoaded) return;
 
 		var timestamp = new Date().getTime();
-		$.getJSON('{GET_URL}&ts=' + timestamp, function(res) {
-			if (res.status === 'ok') {
-				ace.edit('codearea_codearea_html_{ID}').session.setValue(res.html);
-				htmlLoaded = true;
-			}
-		});
+		fetch('{GET_URL}&ts=' + timestamp)
+			.then(response => response.json())
+			.then(res => {
+				if (res.status === 'ok') {
+					ace.edit('codearea_codearea_html_{ID}').session.setValue(res.html);
+					htmlLoaded = true;
+				}
+			});
 	});
 
-	$('#sy-code-modal form').on('submit', function(e) {
-		let code = ace.edit('codearea_codearea_js_{ID}').getValue();
-		this.js.value = code;
+	document.querySelector('#sy-code-modal form').addEventListener('submit', function(e) {
+		this.js.value = ace.edit('codearea_codearea_js_{ID}').getValue();
 		this.css.value = ace.edit('codearea_codearea_css_{ID}').getValue();
 	});
 
-	$('#sy-new-page-modal').has('div.alert').modal('show');
-	$('#sy-update-page-modal').has('div.alert').modal('show');
-	$('#sy-code-modal').has('div.alert').modal('show');
+	let modals = ['#sy-new-page-modal', '#sy-update-page-modal', '#sy-code-modal'];
+	modals.forEach(function(modalId) {
+		if (document.querySelector(modalId).querySelector('div.alert')) {
+			var bsModal = new bootstrap.Modal(document.querySelector(modalId));
+			bsModal.show();
+		}
+	});
 
-	// Error message
-	let errorMsg = $('#sy-code-modal div.alert').text();
+	let alertElement = document.querySelector('#sy-code-modal div.alert');
+	let errorMsg = alertElement ? alertElement.textContent : null;
 	if (errorMsg) {
 		if (errorMsg.startsWith('SCSS')) {
-			$('#sy-css-tab').tab('show');
+			var bsTab = new bootstrap.Tab(document.querySelector('#sy-css-tab'));
+			bsTab.show();
 		}
 		flash(errorMsg, 'danger');
 	}
