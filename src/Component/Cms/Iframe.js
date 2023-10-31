@@ -106,7 +106,7 @@
 
 		onLoad: function () {
 			// Register styles for placeholder widget frame.
-			CKEDITOR.addCss('.sytranslate{background-color:#ff0}');
+			CKEDITOR.addCss('.sytranslate{border: 1px dashed #ccc}');
 		},
 
 		init: function (editor) {
@@ -286,6 +286,7 @@
 				} else if (reload) {
 					location.reload(true);
 				}
+				window.parent.postMessage('saved', '*');
 			})
 			.catch((error) => {
 				console.error('Error:', error);
@@ -439,6 +440,13 @@
 			e.returnValue = confirmationMessage;
 			return confirmationMessage;
 		}
+	});
+
+	// Prevent navigation on empty href links
+	document.querySelectorAll('a[href="#"],a[href=""]').forEach(function (link) {
+		link.addEventListener('click', function (e) {
+			e.preventDefault();
+		});
 	});
 
 })();

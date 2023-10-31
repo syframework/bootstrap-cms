@@ -48,3 +48,15 @@ INSERT IGNORE INTO `t_user_role_has_permission` VALUES ('admin', 'content-update
 INSERT IGNORE INTO `t_user_role_has_permission` VALUES ('admin', 'content-code');
 INSERT IGNORE INTO `t_user_role_has_permission` VALUES ('admin', 'content-history-view');
 INSERT IGNORE INTO `t_user_role_has_permission` VALUES ('admin', 'content-history-restore');
+
+-- ----------------------------
+-- Set the translation key to case sensitive
+-- ----------------------------
+ALTER TABLE `t_content_translation`
+MODIFY `key` VARCHAR(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+
+-- ----------------------------
+-- Set the visibility option
+-- ----------------------------
+ALTER TABLE `t_content`
+MODIFY COLUMN `visibility` enum('private','public','protected') NOT NULL DEFAULT 'private' COMMENT 'select';

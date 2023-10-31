@@ -27,6 +27,9 @@ class Content extends WebComponent {
 		if ($this->get('mode') === 'iframe') {
 			HeadData::setBase(target: '_parent');
 		}
+		if ($content['visibility'] !== 'public') {
+			HeadData::addMeta('robots', 'noindex');
+		}
 
 		$this->mount(fn () => $this->init($content));
 	}
