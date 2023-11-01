@@ -16,6 +16,6 @@ return [
 	'Translation identifier' => 'Identifiant de la traduction',
 	'Translation value' => 'Valeur de la traduction',
 	'Private page' => 'Page privée',
-	'Secret page' => 'Page secrète (publique mais non indexée dans les moteurs de recherche)',
+	'Secret page' => 'Page publique invisible aux moteurs',
 	'Public page' => 'Page publique',
 ];
