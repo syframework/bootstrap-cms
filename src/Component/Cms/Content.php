@@ -323,7 +323,7 @@ class Content extends WebComponent {
 		} else {
 			$condition = ['id' => $this->id];
 			if (!$user->hasPermission('content-read')) {
-				$condition['visibility'] = 'public';
+				$condition['visibility'] = ['public', 'protected'];
 			}
 			$content = $service->content->retrieve($condition);
 		}
