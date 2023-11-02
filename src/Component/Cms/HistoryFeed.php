@@ -27,7 +27,7 @@ class HistoryFeed extends \Sy\Bootstrap\Component\Feed {
 			$service = \Project\Service\Container::getInstance();
 			$nb = $service->contentHistory->countContentVersions($this->contentId, $n);
 			return $nb <= 10;
-		} catch (\Sy\Bootstrap\Service\Crud\Exception $e) {
+		} catch (\Sy\Db\MySql\Exception $e) {
 			$this->logError('SQL Error');
 			return true;
 		}

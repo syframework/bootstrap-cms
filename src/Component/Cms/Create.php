@@ -32,8 +32,6 @@ class Create extends \Sy\Bootstrap\Component\Form\Crud\Create {
 	}
 
 	public function init() {
-		parent::init();
-
 		// Alias
 		$this->getField('alias')->setAttribute('placeholder', $this->_('Authorized characters:') . ' a-z 0-9');
 		$this->getField('alias')->setAttribute('maxlength', '128');

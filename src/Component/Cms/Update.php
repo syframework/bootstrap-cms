@@ -11,13 +11,11 @@ class Update extends \Sy\Bootstrap\Component\Form\Crud {
 	private $id;
 
 	public function __construct($id) {
-		$this->id = $id;
 		parent::__construct('content', ['id' => $id]);
+		$this->id = $id;
 	}
 
 	public function init() {
-		parent::init();
-
 		// Alias
 		$this->getField('alias')->addValidator(function($value) {
 			if (preg_match('/^[a-z0-9\-]*$/', $value) === 1) return true;
