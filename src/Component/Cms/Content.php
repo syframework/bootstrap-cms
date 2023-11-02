@@ -148,9 +148,7 @@ class Content extends WebComponent {
 
 		// Duplicate
 		if ($user->hasPermission('content-create')) {
-			$duplicateForm = new Create($content['html'], $content['scss'], $content['css'], $content['js']);
-			$duplicateForm->initialize();
-			$this->setVar('DUPLICATE_PAGE_FORM', $duplicateForm);
+			$this->setVar('DUPLICATE_PAGE_FORM', new Create($content['html'], $content['scss'], $content['css'], $content['js']));
 			$this->setBlock('DUPLICATE_BTN_BLOCK');
 			$this->setBlock('DUPLICATE_MODAL_BLOCK');
 		}
@@ -167,9 +165,7 @@ class Content extends WebComponent {
 
 		// Create
 		if ($user->hasPermission('content-create')) {
-			$form = new Create();
-			$form->initialize();
-			$this->setVar('NEW_PAGE_FORM', $form);
+			$this->setVar('NEW_PAGE_FORM', new Create());
 			$this->setBlock('CREATE_BTN_BLOCK');
 			$this->setBlock('CREATE_MODAL_BLOCK');
 		}
