@@ -8,6 +8,7 @@ class Content extends \Sy\Component {
 	public function __construct() {
 		parent::__construct();
 		$this->addTranslator(LANG_DIR);
+		$this->addTranslator(__DIR__ . '/../../lang/bootstrap-cms');
 		$this->actionDispatch(ACTION_TRIGGER);
 	}
 
