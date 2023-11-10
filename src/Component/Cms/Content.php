@@ -119,15 +119,12 @@ class Content extends WebComponent {
 	 * @param array $content
 	 */
 	private function initParent($content) {
-		$this->setVar('IFRAME_URL', Url::build('page', 'content', ['id' => $this->id, 'mode' => 'iframe']));
+		$this->setVar('IFRAME_URL', Url::build('page', 'content', ['id' => $this->id, 'mode' => 'iframe', 'ts' => time()]));
 		$this->setBlock('CONTENT_BLOCK');
 		$this->initToolbar($content);
 
-		// Hide debug bar
-		$this->addCssCode('#sy_debug_bar {display:none;}');
-
-		// Toolbar with a high z-index
-		$this->addCssCode('#sy-page-toolbar {z-index:9999999;}');
+		// Css
+		$this->addCssCode(__DIR__ . '/Parent.css');
 	}
 
 	/**
@@ -316,6 +313,15 @@ class Content extends WebComponent {
 		$version = $this->get('version');
 		if (!is_null($version) and $user->hasPermission('content-history-view')) {
 			$content = $service->contentHistory->retrieve(['id' => $this->id, 'crc32' => $version]);
+		} elseif ($user->hasPermission('content-code') and $this->post('form-id') === 'sy-content-form') {
+			$content = [
+				'id'          => $this->id,
+				'title'       => 'Preview page',
+				'description' => 'Preview page',
+				'html'        => Code::checkHtml($this->post('html')),
+				'css'         => Code::compileScss($this->post('css', '')),
+				'js'          => $this->post('js', ''),
+			];
 		} else {
 			$condition = ['id' => $this->id];
 			if (!$user->hasPermission('content-read')) {

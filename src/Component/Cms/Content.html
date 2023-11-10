@@ -1,5 +1,11 @@
 <!-- BEGIN CONTENT_BLOCK -->
-<iframe id="sy-content-iframe" src="{IFRAME_URL}" width="100%" style="height:100vh; position: absolute; top: 0; z-index: 1050;"></iframe>
+<iframe id="sy-content-iframe" name="sy-content-iframe" src="{IFRAME_URL}"></iframe>
+<form id="sy-content-form" action="{IFRAME_URL}" method="post" target="sy-content-iframe" style="display:none">
+<input type="hidden" name="form-id" value="sy-content-form" />
+<input type="hidden" name="html" />
+<input type="hidden" name="css" />
+<input type="hidden" name="js" />
+</form>
 <!-- ELSE CONTENT_BLOCK -->
 <div id="sy-content">
 	{HTML}
@@ -70,7 +76,7 @@
 	</div>
 	<!-- END UPDATE_BTN_BLOCK -->
 	<!-- BEGIN CODE_BTN_BLOCK -->
-	<div data-bs-toggle="modal" data-bs-target="#sy-code-modal" data-bs-backdrop="static">
+	<div data-bs-toggle="modal" data-bs-target="#sy-code-modal">
 		<button class="btn btn-primary btn-circle mb-1" title="{'Source code'}" data-bs-title="{'Source code'}" data-bs-placement="right" data-bs-container="body" data-bs-trigger="hover">
 			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-code-slash" viewBox="0 0 16 16">
 				<path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/>
@@ -167,7 +173,7 @@
 <!-- END UPDATE_MODAL_BLOCK -->
 
 <!-- BEGIN CODE_MODAL_BLOCK -->
-<div class="modal fade" id="sy-code-modal">
+<div class="modal fade" id="sy-code-modal" data-bs-backdrop="false">
 	<div class="modal-dialog modal-fullscreen">
 		<div class="modal-content">
 			<div class="modal-header py-2">
@@ -188,13 +194,42 @@
 						</button>
 					</li>
 				</ul>
+				<div class="vr mx-3"></div>
+				<div class="btn-group" role="group" aria-label="Screen layout">
+					<input type="radio" class="btn-check" name="screen-split" value="full" id="btn-screen-split-reset">
+					<label class="btn btn-outline-primary" for="btn-screen-split-reset">
+						<svg xmlns="http://www.w3.org/2000/svg" style="width:1em;height:1em;vertical-align:-0.125em" fill="currentColor" viewBox="0 0 16 16">
+							<path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+						</svg>
+					</label>
+
+					<input type="radio" class="btn-check" name="screen-split" value="vertical" id="btn-screen-split-vertical">
+					<label class="btn btn-outline-primary" for="btn-screen-split-vertical">
+						<svg xmlns="http://www.w3.org/2000/svg" style="width:1em;height:1em;vertical-align:-0.125em" fill="currentColor" viewBox="0 0 16 16">
+							<path d="M 8.50629,1 V 15 H 7.49371 L 7.51887,1 Z M 14,1 a 1,1 0 0 1 1,1 v 12 a 1,1 0 0 1 -1,1 H 2 A 1,1 0 0 1 1,14 V 2 A 1,1 0 0 1 2,1 Z M 2,0 A 2,2 0 0 0 0,2 v 12 a 2,2 0 0 0 2,2 h 12 a 2,2 0 0 0 2,-2 V 2 A 2,2 0 0 0 14,0 Z" />
+						</svg>
+					</label>
+
+					<input type="radio" class="btn-check" name="screen-split" value="horizontal" id="btn-screen-split-horizontal">
+					<label class="btn btn-outline-primary" for="btn-screen-split-horizontal">
+						<svg xmlns="http://www.w3.org/2000/svg" style="width:1em;height:1em;vertical-align:-0.125em" fill="currentColor" viewBox="0 0 16 16">
+							<path d="M 1,7.49371 H 15 V 8.50629 L 1,8.48113 Z M 14,1 a 1,1 0 0 1 1,1 v 12 a 1,1 0 0 1 -1,1 H 2 A 1,1 0 0 1 1,14 V 2 A 1,1 0 0 1 2,1 Z M 2,0 A 2,2 0 0 0 0,2 v 12 a 2,2 0 0 0 2,2 h 12 a 2,2 0 0 0 2,-2 V 2 A 2,2 0 0 0 14,0 Z" />
+						</svg>
+					</label>
+				</div>
 				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 			</div>
 			<div class="modal-body overflow-hidden p-0">
 				{CODE_FORM}
 			</div>
 			<div class="modal-footer">
-				<button form="{CODE_FORM_ID}" type="submit" class="btn btn-primary"><span class="fas fa-save"></span> {"Save"}</button>
+				<button form="{CODE_FORM_ID}" type="submit" class="btn btn-primary">
+					<svg xmlns="http://www.w3.org/2000/svg" style="width:1em;height:1em;vertical-align:-0.125em" fill="currentColor" class="bi bi-floppy-fill" viewBox="0 0 16 16">
+						<path d="M0 1.5A1.5 1.5 0 0 1 1.5 0H3v5.5A1.5 1.5 0 0 0 4.5 7h7A1.5 1.5 0 0 0 13 5.5V0h.086a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5H14v-5.5A1.5 1.5 0 0 0 12.5 9h-9A1.5 1.5 0 0 0 2 10.5V16h-.5A1.5 1.5 0 0 1 0 14.5v-13Z"/>
+						<path d="M3 16h10v-5.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5V16Zm9-16H4v5.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V0ZM9 1h2v4H9V1Z"/>
+					</svg>
+					{"Save"}
+				</button>
 			</div>
 		</div>
 	</div>

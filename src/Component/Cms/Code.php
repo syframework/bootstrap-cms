@@ -109,11 +109,10 @@ class Code extends \Sy\Bootstrap\Component\Form {
 			$js   = $this->post('js');
 
 			// Check HTML
-			$html = $this->checkHtml($html);
+			$html = self::checkHtml($html);
 
 			// Compile scss
-			$compiler = new \ScssPhp\ScssPhp\Compiler();
-			$css = $compiler->compileString($scss)->getCss();
+			$css = self::compileScss($scss);
 
 			// Save content
 			$service = \Project\Service\Container::getInstance();
@@ -147,10 +146,23 @@ class Code extends \Sy\Bootstrap\Component\Form {
 		}
 	}
 
-	private function checkHtml($html) {
+	/**
+	 * @param  string $html
+	 * @return string
+	 */
+	public static function checkHtml($html) {
 		$html5 = new HTML5();
 		$dom = $html5->loadHTMLFragment($html);
 		return $html5->saveHTML($dom);
+	}
+
+	/**
+	 * @param  string $scss
+	 * @return string
+	 */
+	public static function compileScss($scss) {
+		$compiler = new \ScssPhp\ScssPhp\Compiler();
+		return $compiler->compileString($scss)->getCss();
 	}
 
 }
