@@ -443,10 +443,8 @@
 	});
 
 	// Prevent navigation on empty href links
-	document.querySelectorAll('a[href="#"],a[href=""]').forEach(function (link) {
-		link.addEventListener('click', function (e) {
-			e.preventDefault();
-		});
+	document.querySelectorAll('a[href^="#"],a[href=""]').forEach(function (link) {
+		link.setAttribute('target', '_self');
 	});
 
 })();
