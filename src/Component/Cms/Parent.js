@@ -7,6 +7,11 @@
 		frame.contentWindow.postMessage('start', '*');
 		document.getElementById('sy-btn-page-update-start').classList.add("d-none");
 		document.getElementById('sy-btn-page-update-stop').classList.remove("d-none");
+
+		// Disable code edit button
+		let codeButton = document.getElementById('sy-btn-code');
+		if (!codeButton) return;
+		codeButton.setAttribute('disabled', 'true');
 	});
 
 	document.getElementById('sy-btn-page-update-stop').addEventListener('click', function(e) {
@@ -16,6 +21,11 @@
 		frame.contentWindow.postMessage('stop', '*');
 		document.getElementById('sy-btn-page-update-start').classList.remove("d-none");
 		document.getElementById('sy-btn-page-update-stop').classList.add("d-none");
+
+		// Enable code edit button
+		let codeButton = document.getElementById('sy-btn-code');
+		if (!codeButton) return;
+		codeButton.removeAttribute('disabled');
 	});
 	<!-- END UPDATE_BLOCK -->
 
@@ -79,6 +89,11 @@
 	document.getElementById('sy-code-modal').addEventListener('show.bs.modal', function (e) {
 		loadHtml();
 		screenSplit(window.localStorage.getItem('screen-split-layout'));
+
+		// Disable inline edit button
+		let editButton = document.getElementById('sy-btn-page-update-start');
+		if (!editButton) return;
+		editButton.setAttribute('disabled', 'true');
 	});
 
 	document.getElementById('sy-code-modal').addEventListener('shown.bs.modal', function (e) {
@@ -87,6 +102,11 @@
 
 	document.getElementById('sy-code-modal').addEventListener('hide.bs.modal', function (e) {
 		screenSplitReset();
+
+		// Disable inline edit button
+		let editButton = document.getElementById('sy-btn-page-update-start');
+		if (!editButton) return;
+		editButton.removeAttribute('disabled');
 	});
 
 	document.querySelector('#sy-code-modal form').addEventListener('submit', function(e) {
@@ -201,24 +221,37 @@
 		form.submit();
 	}
 
-	var timeoutId;
+	let html, scss, js;
+	let timeoutId;
 
 	codeEditorHtml.session.on('change', function (delta) {
-		if (delta.id === 1) return;
+		if (delta.id === 1) {
+			html = codeEditorHtml.getValue();
+			return;
+		}
+		if (html === codeEditorHtml.getValue()) return;
 		if (timeoutId) {
 			clearTimeout(timeoutId);
 		}
 		timeoutId = setTimeout(loadPreview, 2000);
 	});
 	codeEditorCss.session.on('change', function (delta) {
-		if (delta.id === 1) return;
+		if (delta.id === 1) {
+			scss = codeEditorCss.getValue();
+			return;
+		}
+		if (scss === codeEditorCss.getValue()) return;
 		if (timeoutId) {
 			clearTimeout(timeoutId);
 		}
 		timeoutId = setTimeout(loadPreview, 2000);
 	});
 	codeEditorJs.session.on('change', function (delta) {
-		if (delta.id === 1) return;
+		if (delta.id === 1) {
+			js = codeEditorJs.getValue();
+			return;
+		}
+		if (js === codeEditorJs.getValue()) return;
 		if (timeoutId) {
 			clearTimeout(timeoutId);
 		}
