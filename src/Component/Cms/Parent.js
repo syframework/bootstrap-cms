@@ -33,7 +33,7 @@
 	document.getElementById('sy-btn-page-delete').addEventListener('click', function(e) {
 		e.preventDefault();
 		if (confirm((new DOMParser).parseFromString('{CONFIRM_DELETE}', 'text/html').documentElement.textContent)) {
-			document.getElementById('{DELETE_FORM_ID}').dispatchEvent(new Event('submit'));
+			document.getElementById('{DELETE_FORM_ID}').submit();
 		}
 	});
 	<!-- END DELETE_BLOCK -->
