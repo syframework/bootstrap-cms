@@ -325,7 +325,7 @@
 					});
 
 					// Execute js code
-					eval(res.js);
+					import('data:text/javascript;charset=utf-8,' + encodeURIComponent(res.js));
 					window.dispatchEvent(new Event('load'));
 
 					document.getElementById('sy-content').setAttribute('contenteditable', 'true');
