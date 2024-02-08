@@ -53,20 +53,22 @@
 	const codeEditorJs = ace.edit('codearea_codearea_js_{ID}');
 
 	function resizeCodeArea() {
-		let modalHeaderHeight = document.querySelector('#sy-code-modal .modal-header').offsetHeight;
-		let modalFooterHeight = document.querySelector('#sy-code-modal .modal-footer').offsetHeight;
-		let codeEditorHeight = window.innerHeight - modalHeaderHeight - modalFooterHeight;
+		let codeEditorHeight = document.querySelector('#sy-code-modal .modal-body').offsetHeight;
+		let codeEditorWidth = document.querySelector('#sy-code-modal .modal-body').offsetWidth;
 
 		let htmlEditor = document.querySelector('#codearea_codearea_html_{ID}');
 		htmlEditor.style.height = codeEditorHeight + 'px';
+		htmlEditor.style.width = codeEditorWidth + 'px';
 		codeEditorHtml.resize();
 
 		let cssEditor = document.querySelector('#codearea_codearea_css_{ID}');
 		cssEditor.style.height = codeEditorHeight + 'px';
+		cssEditor.style.width = codeEditorWidth + 'px';
 		codeEditorCss.resize();
 
 		let jsEditor = document.querySelector('#codearea_codearea_js_{ID}');
 		jsEditor.style.height = codeEditorHeight + 'px';
+		jsEditor.style.width = codeEditorWidth + 'px';
 		codeEditorJs.resize();
 	}
 
@@ -147,6 +149,7 @@
 				screenSplitFull();
 				break;
 		}
+		resizeCodeArea();
 	}
 
 	function screenSplitReset() {
@@ -156,10 +159,6 @@
 		modal.style.left = '0';
 		modal.style.width = '100vw';
 		modal.style.height = '100vh';
-
-		const dialog = document.querySelector('#sy-code-modal>.modal-dialog');
-		dialog.style.width = '';
-		dialog.style.height = '';
 
 		const iframe = document.getElementById('sy-content-iframe');
 		iframe.style.top = '0';
@@ -182,7 +181,6 @@
 		modal.style.left = '50%';
 		modal.style.width = '50vw';
 
-		document.querySelector('#sy-code-modal>.modal-dialog').style.width = '100%';
 		document.getElementById('sy-content-iframe').style.width = '50vw';
 
 		document.getElementById('btn-screen-split-vertical').checked = true;
@@ -196,8 +194,6 @@
 		modal.style.position = 'absolute';
 		modal.style.height = '50vh';
 		modal.style.top = '50%';
-
-		document.querySelector('#sy-code-modal>.modal-dialog').style.height = '100%';
 
 		const iframe = document.getElementById('sy-content-iframe');
 		iframe.style.top = '0';
