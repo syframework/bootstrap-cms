@@ -195,11 +195,12 @@
 		const modal = document.getElementById('sy-code-modal');
 		modal.style.position = 'absolute';
 		modal.style.height = '50vh';
+		modal.style.top = '50%';
 
 		document.querySelector('#sy-code-modal>.modal-dialog').style.height = '100%';
 
 		const iframe = document.getElementById('sy-content-iframe');
-		iframe.style.top = '50%';
+		iframe.style.top = '0';
 		iframe.style.height = '50vh';
 
 		document.getElementById('btn-screen-split-horizontal').checked = true;
