@@ -1,6 +1,6 @@
 (function () {
 	<!-- BEGIN UPDATE_BLOCK -->
-	document.getElementById('sy-btn-page-update-start').addEventListener('click', function(e) {
+	document.getElementById('sy-btn-page-update-start').addEventListener('click', function (e) {
 		e.preventDefault();
 		var frame = document.getElementById('sy-content-iframe');
 		if (!frame) return;
@@ -14,7 +14,7 @@
 		codeButton.setAttribute('disabled', 'true');
 	});
 
-	document.getElementById('sy-btn-page-update-stop').addEventListener('click', function(e) {
+	document.getElementById('sy-btn-page-update-stop').addEventListener('click', function (e) {
 		e.preventDefault();
 		var frame = document.getElementById('sy-content-iframe');
 		if (!frame) return;
@@ -30,7 +30,7 @@
 	<!-- END UPDATE_BLOCK -->
 
 	<!-- BEGIN DELETE_BLOCK -->
-	document.getElementById('sy-btn-page-delete').addEventListener('click', function(e) {
+	document.getElementById('sy-btn-page-delete').addEventListener('click', function (e) {
 		e.preventDefault();
 		if (confirm((new DOMParser).parseFromString('{CONFIRM_DELETE}', 'text/html').documentElement.textContent)) {
 			document.getElementById('{DELETE_FORM_ID}').submit();
@@ -82,6 +82,7 @@
 				if (res.status === 'ok') {
 					ace.edit('codearea_codearea_html_{ID}').session.setValue(res.html);
 					htmlLoaded = true;
+					resizeCodeArea();
 				}
 			});
 	}
@@ -100,6 +101,7 @@
 
 	document.getElementById('sy-code-modal').addEventListener('shown.bs.modal', function (e) {
 		resizeCodeArea();
+		showLastSelectedTab();
 	});
 
 	document.getElementById('sy-code-modal').addEventListener('hide.bs.modal', function (e) {
@@ -111,13 +113,13 @@
 		editButton.removeAttribute('disabled');
 	});
 
-	document.querySelector('#sy-code-modal form').addEventListener('submit', function(e) {
+	document.querySelector('#sy-code-modal form').addEventListener('submit', function (e) {
 		this.js.value = codeEditorJs.getValue();
 		this.css.value = codeEditorCss.getValue();
 	});
 
 	let modals = ['#sy-new-page-modal', '#sy-update-page-modal', '#sy-code-modal'];
-	modals.forEach(function(modalId) {
+	modals.forEach(function (modalId) {
 		if (document.querySelector(modalId).querySelector('div.alert')) {
 			var bsModal = new bootstrap.Modal(document.querySelector(modalId));
 			bsModal.show();
@@ -254,6 +256,42 @@
 		}
 		timeoutId = setTimeout(loadPreview, 2000);
 	});
+
+	// Editor focus on tab change
+	document.querySelectorAll('#sy-code-modal button[data-bs-toggle="tab"]').forEach(function (tabEl) {
+		tabEl.addEventListener('shown.bs.tab', event => {
+			let id = event.target.getAttribute('id');
+			focus(id);
+			window.localStorage.setItem('sy-code-tab', id);
+		});
+	});
+
+	function focus(id) {
+		switch (id) {
+			case 'sy-css-tab':
+				codeEditorCss.focus();
+				break;
+
+			case 'sy-js-tab':
+				codeEditorJs.focus();
+				break;
+
+			default:
+				codeEditorHtml.focus();
+				break;
+		}
+	}
+
+	function showTab(id) {
+		let element = document.getElementById(id);
+		if (!element) return;
+		focus(id);
+		bootstrap.Tab.getOrCreateInstance(element).show();
+	}
+
+	function showLastSelectedTab() {
+		showTab(window.localStorage.getItem('sy-code-tab'));
+	}
 	<!-- END CODE_BLOCK -->
 
 })();
