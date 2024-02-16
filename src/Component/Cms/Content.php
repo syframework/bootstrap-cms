@@ -14,15 +14,32 @@ class Content extends WebComponent {
 	private $id;
 
 	/**
+	 * Content translations data
+	 * [
+	 *   'Translation key 1' => 'Translation value 1',
+	 *   'Translation key 2' => 'Translation value 2',
+	 *   ...
+	 * ]
+	 *
+	 * @var array
+	 */
+	private $translations;
+
+	/**
 	 * @param integer $id Content id
 	 */
 	public function __construct(int $id) {
 		$this->id = $id;
 
+		// Retrieve translations data
+		$service = \Project\Service\Container::getInstance();
+		$transArray = $service->contentTranslation->retrieveAll(['WHERE' => ['lang' => $service->lang->getLang()]]);
+		$this->translations = array_combine(array_column($transArray, 'key'), array_column($transArray, 'value'));
+
 		// Set meta title, description and canonical
 		$content = $this->getContent();
-		HeadData::setTitle(Str::escape($content['title']));
-		HeadData::setDescription(Str::escape($content['description']));
+		HeadData::setTitle(Str::escape(isset($this->translations[$content['title']]) ? $this->translations[$content['title']] : $content['title']));
+		HeadData::setDescription(Str::escape(isset($this->translations[$content['description']]) ? $this->translations[$content['description']] : $content['description']));
 		HeadData::setCanonical(PROJECT_URL . Url::build('page', 'content', ['id' => $this->id]));
 		if ($this->get('mode') === 'iframe') {
 			HeadData::setBase(target: '_parent');
@@ -72,14 +89,9 @@ class Content extends WebComponent {
 		$this->initContent($content);
 
 		// Javascript code
+		$service = \Project\Service\Container::getInstance();
 		$js = new \Sy\Component();
 		$js->setTemplateFile(__DIR__ . '/Iframe.js');
-
-		// Retrieve translations data
-		$service = \Project\Service\Container::getInstance();
-		$transArray = $service->contentTranslation->retrieveAll(['WHERE' => ['lang' => $service->lang->getLang()]]);
-		$translations = array_combine(array_column($transArray, 'key'), array_column($transArray, 'value'));
-
 		$js->setVars([
 			'ID'               => $content['id'],
 			'CSRF'             => $service->user->getCsrfToken(),
@@ -95,7 +107,7 @@ class Content extends WebComponent {
 			'CSRF_URL'         => Url::build('api', 'csrf'),
 			'LANG'             => $service->lang->getLang(),
 			'TRANSLATE_URL'    => Url::build('api', 'content-translation'),
-			'TRANSLATIONS'     => json_encode($translations),
+			'TRANSLATIONS'     => json_encode($this->translations),
 			'LANGUAGE'         => $this->_('In english'),
 			'ADD_TRANSLATE'    => $this->_('Add new translation slot'),
 			'TRANSLATE_KEY'    => $this->_('Translation identifier'),
@@ -228,10 +240,8 @@ class Content extends WebComponent {
 		$html->setTemplateContent($content['html']);
 
 		// Load content translations
-		$service = \Project\Service\Container::getInstance();
-		$translations = $service->contentTranslation->retrieveAll(['WHERE' => ['lang' => $service->lang->getLang()]]);
-		foreach ($translations as $translation) {
-			$html->setVar($translation['key'], $translation['value']);
+		foreach ($this->translations as $key => $value) {
+			$html->setVar($key, $value);
 		}
 
 		// Add web components in content
