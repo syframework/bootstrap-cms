@@ -354,6 +354,29 @@
 	function showLastSelectedTab() {
 		showTab(window.localStorage.getItem('sy-code-tab'));
 	}
+
+	// Content iframe scroll position
+	const iframe = document.getElementById('sy-content-iframe');
+
+	// Save content iframe scroll position
+	function saveScrollPosition() {
+		// Store the scroll position in the local storage
+		localStorage.setItem('sy-content-iframe-x', iframe.contentWindow.scrollX);
+		localStorage.setItem('sy-content-iframe-y', iframe.contentWindow.scrollY);
+	}
+
+	// Restore content iframe scroll position
+	function restoreScrollPosition() {
+		// Get the scroll position from the local storage
+		var scrollX = localStorage.getItem('sy-content-iframe-x');
+		var scrollY = localStorage.getItem('sy-content-iframe-y');
+
+		// Scroll the iframe to the stored position
+		iframe.contentWindow.scrollTo(scrollX, scrollY);
+	}
+
+	iframe.contentWindow.addEventListener("scroll", saveScrollPosition);
+	iframe.addEventListener("load", restoreScrollPosition);
 	<!-- END CODE_BLOCK -->
 
 })();
