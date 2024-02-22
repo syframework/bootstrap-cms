@@ -81,6 +81,7 @@
 			.then(res => {
 				if (res.status === 'ok') {
 					ace.edit('codearea_codearea_html_{ID}').session.setValue(res.html);
+					loadFoldState(codeEditorHtml, 'html_{ID}');
 					htmlLoaded = true;
 					resizeCodeArea();
 				}
@@ -229,6 +230,7 @@
 			return;
 		}
 		if (html === codeEditorHtml.getValue()) return;
+		saveFoldState(codeEditorHtml, 'html_{ID}');
 		if (timeoutId) {
 			clearTimeout(timeoutId);
 		}
@@ -237,9 +239,11 @@
 	codeEditorCss.session.on('change', function (delta) {
 		if (delta.id === 1) {
 			scss = codeEditorCss.getValue();
+			loadFoldState(codeEditorCss, 'css_{ID}');
 			return;
 		}
 		if (scss === codeEditorCss.getValue()) return;
+		saveFoldState(codeEditorHtml, 'css_{ID}');
 		if (timeoutId) {
 			clearTimeout(timeoutId);
 		}
@@ -248,14 +252,72 @@
 	codeEditorJs.session.on('change', function (delta) {
 		if (delta.id === 1) {
 			js = codeEditorJs.getValue();
+			loadFoldState(codeEditorJs, 'js_{ID}');
 			return;
 		}
 		if (js === codeEditorJs.getValue()) return;
+		saveFoldState(codeEditorHtml, 'js_{ID}');
 		if (timeoutId) {
 			clearTimeout(timeoutId);
 		}
 		timeoutId = setTimeout(loadPreview, 2000);
 	});
+
+	// Listen code fold event
+	codeEditorHtml.session.on('changeFold', function (e) {
+		saveFoldState(codeEditorHtml, 'html_{ID}');
+	});
+	codeEditorCss.session.on('changeFold', function (e) {
+		saveFoldState(codeEditorCss, 'css_{ID}');
+	});
+	codeEditorJs.session.on('changeFold', function (e) {
+		saveFoldState(codeEditorJs, 'js_{ID}');
+	});
+
+	// Save the fold state
+	function saveFoldState(editor, id) {
+		localStorage.setItem('folds_' + id, JSON.stringify(getFolds(editor.session.getAllFolds())));
+		localStorage.setItem('crc32_' + id, CRC32.str(editor.session.getValue()));
+	}
+
+	function getFolds(folds, row = 0) {
+		if (folds.length === 0) return [];
+		let res = [];
+		folds.forEach(function (fold) {
+			res.push({
+				start: {row: fold.start.row + row, column: fold.start.column},
+				end: {row: fold.end.row + row, column: fold.end.column},
+				placeholder: fold.placeholder,
+				subFolds: getFolds(fold.subFolds, fold.start.row + row)
+			})
+		});
+		return res;
+	}
+
+	// Load the fold state
+	function loadFoldState(editor, id) {
+		var folds = JSON.parse(localStorage.getItem('folds_' + id));
+		if (!folds) return;
+		var crc32 = localStorage.getItem('crc32_' + id);
+		if (CRC32.str(editor.session.getValue()) !== parseInt(crc32)) return;
+		editor.session.addFolds(setFolds(folds));
+	}
+
+	var Fold = ace.require("ace/edit_session/fold").Fold;
+
+	function setFolds(folds) {
+		let res = [];
+		folds.forEach(function (fold) {
+			let f = new Fold(new ace.Range(fold.start.row, fold.start.column, fold.end.row, fold.end.column), fold.placeholder);
+			if (fold.subFolds.length > 0) {
+				setFolds(fold.subFolds).forEach(function (subfold) {
+					f.addSubFold(subfold);
+				});
+			}
+			res.push(f);
+		});
+		return res;
+	}
 
 	// Editor focus on tab change
 	document.querySelectorAll('#sy-code-modal button[data-bs-toggle="tab"]').forEach(function (tabEl) {

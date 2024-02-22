@@ -137,6 +137,9 @@ class Content extends WebComponent {
 
 		// Css
 		$this->addCssCode(__DIR__ . '/Parent.css');
+
+		// CRC32 js
+		$this->addJsLink('https://cdn.jsdelivr.net/npm/crc-32/crc32.min.js');
 	}
 
 	/**
