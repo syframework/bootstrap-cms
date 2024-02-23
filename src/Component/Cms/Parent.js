@@ -417,8 +417,10 @@
 		iframe.contentWindow.scrollTo(scrollX, scrollY);
 	}
 
-	iframe.contentWindow.addEventListener('scroll', saveScrollPosition);
-	iframe.addEventListener('load', restoreScrollPosition);
+	iframe.addEventListener('load', function () {
+		restoreScrollPosition();
+		iframe.contentWindow.addEventListener('scroll', saveScrollPosition);
+	});
 
 	// Editor scroll cursor position
 	function saveEditorScrollState(editor) {
