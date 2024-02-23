@@ -350,6 +350,7 @@
 
 	function loadEditorCursorState(editor) {
 		let position = JSON.parse(localStorage.getItem('cursor_' + editor.container.id));
+		if (!position) return;
 		editor.moveCursorTo(position.row, position.column);
 	}
 
