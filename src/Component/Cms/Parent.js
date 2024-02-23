@@ -173,6 +173,9 @@
 		iframe.style.top = '0';
 		iframe.style.width = '100vw';
 		iframe.style.height = '100vh';
+
+		const resizer = document.getElementById('resizer-vertical');
+		resizer.style.display = 'none';
 	}
 
 	function screenSplitFull() {
@@ -185,12 +188,21 @@
 	function screenSplitVertical() {
 		screenSplitReset();
 
+		// Retrieve width from local storage
+		let leftWidth = localStorage.getItem('sy-content-iframe-width');
+		if (!leftWidth) leftWidth = 50;
+		let rightWidth = 100 - leftWidth;
+
 		const modal = document.getElementById('sy-code-modal');
 		modal.style.position = 'absolute';
-		modal.style.left = '50%';
-		modal.style.width = '50vw';
+		modal.style.left = leftWidth + '%';
+		modal.style.width = rightWidth + 'vw';
 
-		document.getElementById('sy-content-iframe').style.width = '50vw';
+		document.getElementById('sy-content-iframe').style.width = leftWidth + 'vw';
+
+		const resizer = document.getElementById('resizer-vertical');
+		resizer.style.display = 'block';
+		resizer.style.left = leftWidth + '%';
 
 		document.getElementById('btn-screen-split-vertical').checked = true;
 		window.localStorage.setItem('screen-split-layout', 'vertical');
@@ -216,6 +228,81 @@
 		radio.addEventListener('change', function (e) {
 			screenSplit(e.target.value);
 		});
+	});
+
+	// Screen resizer
+	document.addEventListener('DOMContentLoaded', function () {
+		// Query the element
+		const resizer = document.getElementById('resizer-vertical');
+		const leftSide = document.getElementById('sy-content-iframe');
+		const rightSide = document.getElementById('sy-code-modal');
+
+		// The current position of mouse
+		let x = 0;
+		let y = 0;
+		let leftWidth = 0;
+
+		// Handle the mousedown event that's triggered when user drags the resizer
+		const mouseDownHandler = function (e) {
+			// Get the current mouse position
+			x = e.clientX;
+			y = e.clientY;
+			leftWidth = leftSide.getBoundingClientRect().width;
+
+			// Attach the listeners to document
+			document.addEventListener('mousemove', mouseMoveHandler);
+			document.addEventListener('mouseup', mouseUpHandler);
+		};
+
+		const mouseMoveHandler = function (e) {
+			// How far the mouse has been moved
+			const dx = e.clientX - x;
+
+			const newLeftWidth = ((leftWidth + dx) * 100) / window.innerWidth;
+			const newRightWidth = 100 - newLeftWidth;
+			// Min left width 200px
+			if ((newLeftWidth * window.innerWidth / 100) < 200) return;
+			// Min right width 400px
+			if ((newRightWidth * window.innerWidth / 100) < 400) return;
+
+			leftSide.style.width = newLeftWidth + 'vw';
+			resizer.style.left = newLeftWidth + '%';
+
+			rightSide.style.width = newRightWidth + 'vw';
+			rightSide.style.left = newLeftWidth + '%';
+
+			resizer.style.cursor = 'col-resize';
+			document.body.style.cursor = 'col-resize';
+
+			leftSide.style.userSelect = 'none';
+			leftSide.style.pointerEvents = 'none';
+
+			rightSide.style.userSelect = 'none';
+			rightSide.style.pointerEvents = 'none';
+
+			resizeCodeArea();
+
+			// Save width in local storage
+			localStorage.setItem('sy-content-iframe-width', newLeftWidth);
+		};
+
+		const mouseUpHandler = function () {
+			resizer.style.removeProperty('cursor');
+			document.body.style.removeProperty('cursor');
+
+			leftSide.style.removeProperty('user-select');
+			leftSide.style.removeProperty('pointer-events');
+
+			rightSide.style.removeProperty('user-select');
+			rightSide.style.removeProperty('pointer-events');
+
+			// Remove the handlers of mousemove and mouseup
+			document.removeEventListener('mousemove', mouseMoveHandler);
+			document.removeEventListener('mouseup', mouseUpHandler);
+		};
+
+		// Attach the handler
+		resizer.addEventListener('mousedown', mouseDownHandler);
 	});
 
 	// Live preview

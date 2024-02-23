@@ -12,6 +12,18 @@
 	background-size: 42vmin;
 }
 
+.resizer {
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 50%;
+	background-color: #ccc;
+	cursor: ew-resize;
+	height: 100%;
+	width: 5px;
+	z-index: 1060;
+}
+
 /* Hide debug bar */
 #sy_debug_bar {display:none;}
 
