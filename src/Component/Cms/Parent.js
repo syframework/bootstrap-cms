@@ -81,7 +81,6 @@
 			.then(res => {
 				if (res.status === 'ok') {
 					ace.edit('codearea_codearea_html_{ID}').session.setValue(res.html);
-					loadFoldState(codeEditorHtml, 'html_{ID}');
 					htmlLoaded = true;
 					resizeCodeArea();
 				}
@@ -117,6 +116,13 @@
 	document.querySelector('#sy-code-modal form').addEventListener('submit', function (e) {
 		this.js.value = codeEditorJs.getValue();
 		this.css.value = codeEditorCss.getValue();
+
+		// Save editor state
+		[codeEditorHtml, codeEditorCss, codeEditorJs].forEach(function (editor) {
+			saveEditorFoldState(editor);
+			saveEditorCursorState(editor);
+			saveEditorScrollState(editor);
+		});
 	});
 
 	let modals = ['#sy-new-page-modal', '#sy-update-page-modal', '#sy-code-modal'];
@@ -221,61 +227,9 @@
 		form.submit();
 	}
 
-	let html, scss, js;
-	let timeoutId;
-
-	codeEditorHtml.session.on('change', function (delta) {
-		if (delta.id === 1) {
-			html = codeEditorHtml.getValue();
-			return;
-		}
-		if (html === codeEditorHtml.getValue()) return;
-		saveFoldState(codeEditorHtml, 'html_{ID}');
-		if (timeoutId) {
-			clearTimeout(timeoutId);
-		}
-		timeoutId = setTimeout(loadPreview, 2000);
-	});
-	codeEditorCss.session.on('change', function (delta) {
-		if (delta.id === 1) {
-			scss = codeEditorCss.getValue();
-			loadFoldState(codeEditorCss, 'css_{ID}');
-			return;
-		}
-		if (scss === codeEditorCss.getValue()) return;
-		saveFoldState(codeEditorHtml, 'css_{ID}');
-		if (timeoutId) {
-			clearTimeout(timeoutId);
-		}
-		timeoutId = setTimeout(loadPreview, 2000);
-	});
-	codeEditorJs.session.on('change', function (delta) {
-		if (delta.id === 1) {
-			js = codeEditorJs.getValue();
-			loadFoldState(codeEditorJs, 'js_{ID}');
-			return;
-		}
-		if (js === codeEditorJs.getValue()) return;
-		saveFoldState(codeEditorHtml, 'js_{ID}');
-		if (timeoutId) {
-			clearTimeout(timeoutId);
-		}
-		timeoutId = setTimeout(loadPreview, 2000);
-	});
-
-	// Listen code fold event
-	codeEditorHtml.session.on('changeFold', function (e) {
-		saveFoldState(codeEditorHtml, 'html_{ID}');
-	});
-	codeEditorCss.session.on('changeFold', function (e) {
-		saveFoldState(codeEditorCss, 'css_{ID}');
-	});
-	codeEditorJs.session.on('changeFold', function (e) {
-		saveFoldState(codeEditorJs, 'js_{ID}');
-	});
-
 	// Save the fold state
-	function saveFoldState(editor, id) {
+	function saveEditorFoldState(editor) {
+		let id = editor.container.id;
 		localStorage.setItem('folds_' + id, JSON.stringify(getFolds(editor.session.getAllFolds())));
 		localStorage.setItem('crc32_' + id, CRC32.str(editor.session.getValue()));
 	}
@@ -295,10 +249,11 @@
 	}
 
 	// Load the fold state
-	function loadFoldState(editor, id) {
-		var folds = JSON.parse(localStorage.getItem('folds_' + id));
+	function loadEditorFoldState(editor) {
+		let id = editor.container.id;
+		let folds = JSON.parse(localStorage.getItem('folds_' + id));
 		if (!folds) return;
-		var crc32 = localStorage.getItem('crc32_' + id);
+		let crc32 = localStorage.getItem('crc32_' + id);
 		if (CRC32.str(editor.session.getValue()) !== parseInt(crc32)) return;
 		editor.session.addFolds(setFolds(folds));
 	}
@@ -375,8 +330,56 @@
 		iframe.contentWindow.scrollTo(scrollX, scrollY);
 	}
 
-	iframe.contentWindow.addEventListener("scroll", saveScrollPosition);
-	iframe.addEventListener("load", restoreScrollPosition);
+	iframe.contentWindow.addEventListener('scroll', saveScrollPosition);
+	iframe.addEventListener('load', restoreScrollPosition);
+
+	// Editor scroll cursor position
+	function saveEditorScrollState(editor) {
+		localStorage.setItem('top_' + editor.container.id, editor.session.getScrollTop());
+		localStorage.setItem('left_' + editor.container.id, editor.session.getScrollLeft());
+	}
+
+	function loadEditorScrollState(editor) {
+		editor.session.setScrollLeft(localStorage.getItem('left_' + editor.container.id));
+		editor.session.setScrollTop(localStorage.getItem('top_' + editor.container.id));
+	}
+
+	function saveEditorCursorState(editor) {
+		localStorage.setItem('cursor_' + editor.container.id, JSON.stringify(editor.getCursorPosition()));
+	}
+
+	function loadEditorCursorState(editor) {
+		let position = JSON.parse(localStorage.getItem('cursor_' + editor.container.id));
+		editor.moveCursorTo(position.row, position.column);
+	}
+
+	let code = {};
+	let timeoutId;
+
+	[codeEditorHtml, codeEditorCss, codeEditorJs].forEach(function (editor) {
+		// Listen change event
+		editor.session.on('change', function (delta) {
+			let id = editor.container.id;
+			if (delta.id === 1) {
+				code[id] = editor.getValue();
+				loadEditorState(editor);
+				return;
+			}
+			if (code[id] === editor.getValue()) return;
+			if (timeoutId) {
+				clearTimeout(timeoutId);
+			}
+			timeoutId = setTimeout(loadPreview, 2000);
+		});
+	});
+
+	function loadEditorState(editor) {
+		setTimeout(function () {
+			loadEditorFoldState(editor);
+			loadEditorScrollState(editor);
+			loadEditorCursorState(editor)
+		}, 100);
+	}
 	<!-- END CODE_BLOCK -->
 
 })();
