@@ -194,13 +194,13 @@
 		let rightWidth = 100 - leftWidth;
 
 		const modal = document.getElementById('sy-code-modal');
+		const resizer = document.getElementById('resizer-vertical');
 		modal.style.position = 'absolute';
-		modal.style.left = leftWidth + '%';
-		modal.style.width = rightWidth + 'vw';
+		modal.style.left = 'calc(' + leftWidth + '% + ' + resizer.offsetWidth + 'px)';
+		modal.style.width = 'calc(' + rightWidth + 'vw - ' + resizer.offsetWidth + 'px)';
 
 		document.getElementById('sy-content-iframe').style.width = leftWidth + 'vw';
 
-		const resizer = document.getElementById('resizer-vertical');
 		resizer.style.display = 'block';
 		resizer.style.left = leftWidth + '%';
 
@@ -236,18 +236,42 @@
 		const resizer = document.getElementById('resizer-vertical');
 		const leftSide = document.getElementById('sy-content-iframe');
 		const rightSide = document.getElementById('sy-code-modal');
+		const backdrop = document.getElementById('resizer-backdrop');
 
 		// The current position of mouse
 		let x = 0;
 		let y = 0;
 		let leftWidth = 0;
 
+		function pauseEvent(e){
+			if(e.stopPropagation) e.stopPropagation();
+			if(e.preventDefault) e.preventDefault();
+			e.cancelBubble=true;
+			e.returnValue=false;
+			return false;
+		}
+
 		// Handle the mousedown event that's triggered when user drags the resizer
 		const mouseDownHandler = function (e) {
+			pauseEvent(e);
+
 			// Get the current mouse position
 			x = e.clientX;
 			y = e.clientY;
 			leftWidth = leftSide.getBoundingClientRect().width;
+
+			// Show resizer backdrop
+			backdrop.style.display = 'block';
+
+			// Resizer style
+			resizer.style.cursor = 'col-resize';
+			backdrop.style.cursor = 'col-resize';
+			document.body.style.cursor = 'col-resize';
+
+			[leftSide, rightSide, backdrop].forEach(function (element) {
+				element.style.userSelect = 'none';
+				element.style.pointerEvents = 'none';
+			});
 
 			// Attach the listeners to document
 			document.addEventListener('mousemove', mouseMoveHandler);
@@ -255,6 +279,8 @@
 		};
 
 		const mouseMoveHandler = function (e) {
+			pauseEvent(e);
+
 			// How far the mouse has been moved
 			const dx = e.clientX - x;
 
@@ -268,17 +294,8 @@
 			leftSide.style.width = newLeftWidth + 'vw';
 			resizer.style.left = newLeftWidth + '%';
 
-			rightSide.style.width = newRightWidth + 'vw';
-			rightSide.style.left = newLeftWidth + '%';
-
-			resizer.style.cursor = 'col-resize';
-			document.body.style.cursor = 'col-resize';
-
-			leftSide.style.userSelect = 'none';
-			leftSide.style.pointerEvents = 'none';
-
-			rightSide.style.userSelect = 'none';
-			rightSide.style.pointerEvents = 'none';
+			rightSide.style.width = 'calc(' + newRightWidth + 'vw - ' + resizer.offsetWidth + 'px)';
+			rightSide.style.left = 'calc(' + newLeftWidth + '% + ' + resizer.offsetWidth + 'px)';
 
 			resizeCodeArea();
 
@@ -288,13 +305,16 @@
 
 		const mouseUpHandler = function () {
 			resizer.style.removeProperty('cursor');
+			backdrop.style.removeProperty('cursor');
 			document.body.style.removeProperty('cursor');
 
-			leftSide.style.removeProperty('user-select');
-			leftSide.style.removeProperty('pointer-events');
+			[leftSide, rightSide, backdrop].forEach(function (element) {
+				element.style.removeProperty('user-select');
+				element.style.removeProperty('pointer-events');
+			});
 
-			rightSide.style.removeProperty('user-select');
-			rightSide.style.removeProperty('pointer-events');
+			// Hide resizer pane
+			backdrop.style.display = 'none';
 
 			// Remove the handlers of mousemove and mouseup
 			document.removeEventListener('mousemove', mouseMoveHandler);
