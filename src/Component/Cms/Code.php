@@ -31,13 +31,20 @@ class Code extends \Sy\Bootstrap\Component\Form {
 		');
 
 		$this->setAttributes([
-			'id'    => 'code_form_' . $this->id,
-			'class' => 'tab-content',
+			'id'     => 'code_form_' . $this->id,
+			'class'  => 'tab-content',
+			'action' => isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'])['path'] : ''
 		]);
 
 		// Load content
 		$service = \Project\Service\Container::getInstance();
-		$content = $service->content->retrieve(['id' => $this->id]);
+		$version = $this->get('version');
+
+		if (is_null($version)) {
+			$content = $service->content->retrieve(['id' => $this->id]);
+		} else {
+			$content = $service->contentHistory->retrieve(['id' => $this->id, 'crc32' => $version]);
+		}
 
 		// HTML
 		$htmlArea = new CodeArea();

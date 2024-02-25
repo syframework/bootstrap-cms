@@ -26,7 +26,13 @@ class Content extends \Sy\Bootstrap\Component\Api {
 			]);
 		}
 		$service = \Project\Service\Container::getInstance();
-		$content = $service->content->retrieve(['id' => $id]);
+		$version = $this->get('version');
+
+		if (is_null($version)) {
+			$content = $service->content->retrieve(['id' => $id]);
+		} else {
+			$content = $service->contentHistory->retrieve(['id' => $id, 'crc32' => $version]);
+		}
 
 		if (empty($content)) {
 			return $this->notFound([

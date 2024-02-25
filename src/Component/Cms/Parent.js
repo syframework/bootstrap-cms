@@ -127,6 +127,7 @@
 
 	let modals = ['#sy-new-page-modal', '#sy-update-page-modal', '#sy-code-modal'];
 	modals.forEach(function (modalId) {
+		if (!document.querySelector(modalId)) return;
 		if (document.querySelector(modalId).querySelector('div.alert')) {
 			var bsModal = new bootstrap.Modal(document.querySelector(modalId));
 			bsModal.show();
