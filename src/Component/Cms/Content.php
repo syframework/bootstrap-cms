@@ -165,6 +165,26 @@ class Content extends WebComponent {
 			$this->setBlock('DUPLICATE_MODAL_BLOCK');
 		}
 
+		// Javascript code
+		$js = new \Sy\Component();
+		$js->setTemplateFile(__DIR__ . '/Parent.js');
+
+		// Code
+		if ($user->hasPermission('content-code')) {
+			$this->setVars([
+				'CODE_FORM'    => new Code($this->id),
+				'CODE_FORM_ID' => 'code_form_' . $this->id,
+			]);
+
+			$js->setVars([
+				'ID'      => $this->id,
+				'GET_URL' => Url::build('api', 'content', ['id' => $this->id, 'version' => $version]),
+			]);
+			$js->setBlock('CODE_BLOCK');
+			$this->setBlock('CODE_BTN_BLOCK');
+			$this->setBlock('CODE_MODAL_BLOCK');
+		}
+
 		// Version history restore
 		if (!is_null($version)) {
 			$this->setBlock('BACK_BTN_BLOCK', ['BACK_URL' => Url::build('page', 'content', ['id' => $this->id])]);
@@ -172,6 +192,9 @@ class Content extends WebComponent {
 			if ($user->hasPermission('content-history-restore')) {
 				$this->setBlock('RESTORE_BTN_BLOCK', ['RESTORE_URL' => Url::build('content', 'restore', ['id' => $this->id, 'version' => $version])]);
 			}
+
+			// Add javascript code
+			$this->addJsCode($js, ['position' => WebComponent::JS_TOP]);
 			return;
 		}
 
@@ -181,10 +204,6 @@ class Content extends WebComponent {
 			$this->setBlock('CREATE_BTN_BLOCK');
 			$this->setBlock('CREATE_MODAL_BLOCK');
 		}
-
-		// Javascript code
-		$js = new \Sy\Component();
-		$js->setTemplateFile(__DIR__ . '/Parent.js');
 
 		// Update inline
 		if ($user->hasPermission('content-update-inline')) {
@@ -210,22 +229,6 @@ class Content extends WebComponent {
 				'DELETE_FORM_ID' => 'delete-' . $this->id,
 			]);
 			$js->setBlock('DELETE_BLOCK');
-		}
-
-		// Code
-		if ($user->hasPermission('content-code')) {
-			$this->setVars([
-				'CODE_FORM'    => new Code($this->id),
-				'CODE_FORM_ID' => 'code_form_' . $this->id,
-			]);
-
-			$js->setVars([
-				'ID'      => $this->id,
-				'GET_URL' => Url::build('api', 'content', ['id' => $this->id]),
-			]);
-			$js->setBlock('CODE_BLOCK');
-			$this->setBlock('CODE_BTN_BLOCK');
-			$this->setBlock('CODE_MODAL_BLOCK');
 		}
 
 		// Add javascript code
@@ -324,9 +327,8 @@ class Content extends WebComponent {
 
 		// Content version
 		$version = $this->get('version');
-		if (!is_null($version) and $user->hasPermission('content-history-view')) {
-			$content = $service->contentHistory->retrieve(['id' => $this->id, 'crc32' => $version]);
-		} elseif ($user->hasPermission('content-code') and $this->post('form-id') === 'sy-content-form') {
+		if ($user->hasPermission('content-code') and $this->post('form-id') === 'sy-content-form') {
+			// Iframe live preview
 			$content = [
 				'id'          => $this->id,
 				'title'       => 'Preview page',
@@ -335,6 +337,9 @@ class Content extends WebComponent {
 				'css'         => Code::compileScss($this->post('css', '')),
 				'js'          => $this->post('js', ''),
 			];
+		} elseif (!is_null($version) and $user->hasPermission('content-history-view')) {
+			// History view
+			$content = $service->contentHistory->retrieve(['id' => $this->id, 'crc32' => $version]);
 		} else {
 			$condition = ['id' => $this->id];
 			if (!$user->hasPermission('content-read')) {
