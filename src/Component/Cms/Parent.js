@@ -243,7 +243,7 @@
 		let y = 0;
 		let leftWidth = 0;
 
-		function pauseEvent(e){
+		function pauseEvent(e) {
 			if(e.stopPropagation) e.stopPropagation();
 			if(e.preventDefault) e.preventDefault();
 			e.cancelBubble=true;
@@ -286,10 +286,11 @@
 
 			const newLeftWidth = ((leftWidth + dx) * 100) / window.innerWidth;
 			const newRightWidth = 100 - newLeftWidth;
-			// Min left width 200px
-			if ((newLeftWidth * window.innerWidth / 100) < 200) return;
-			// Min right width 400px
-			if ((newRightWidth * window.innerWidth / 100) < 400) return;
+
+			// Min left width 10%
+			if (newLeftWidth < 10) return;
+			// Min right width 10%
+			if (newRightWidth < 10) return;
 
 			leftSide.style.width = newLeftWidth + 'vw';
 			resizer.style.left = newLeftWidth + '%';
