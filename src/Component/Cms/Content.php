@@ -131,7 +131,7 @@ class Content extends WebComponent {
 	 * @param array $content
 	 */
 	private function initParent($content) {
-		$this->setVar('IFRAME_URL', Url::build('page', 'content', ['id' => $this->id, 'mode' => 'iframe', 'ts' => time()]));
+		$this->setVar('IFRAME_URL', Url::build('page', 'content', ['id' => $this->id, 'version' => $this->get('version'), 'mode' => 'iframe', 'ts' => time()]));
 		$this->setBlock('CONTENT_BLOCK');
 		$this->initToolbar($content);
 
