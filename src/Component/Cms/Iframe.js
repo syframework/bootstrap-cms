@@ -179,6 +179,7 @@
 							storeAttributes(element);
 						} else {
 							data.html = element.getHtml();
+							data.attributes = element.attributes;
 						}
 						return true;
 					}
@@ -186,13 +187,15 @@
 				},
 				downcast: function (element) {
 					if (typeof element.attributes['data-sylock-attributes'] !== 'undefined' && element.attributes['data-sylock'] === 'attributes') {
-						element.setHtml(this.editables.content.getData());
+						if (this.editables.content) {
+							element.setHtml(this.editables.content.getData());
+						}
 						restoreAttributes(element);
 						var res = new CKEDITOR.htmlParser.element(element.name, element.attributes);
 						res.setHtml(element.getHtml());
 					} else {
 						var html = this.data.html;
-						var res = new CKEDITOR.htmlParser.element(element.name, element.attributes);
+						var res = new CKEDITOR.htmlParser.element(element.name, this.data.attributes);
 						res.setHtml(html);
 					}
 					return res;
@@ -324,10 +327,6 @@
 						}
 					});
 
-					// Execute js code
-					import('data:text/javascript;charset=utf-8,' + encodeURIComponent(res.js));
-					window.dispatchEvent(new Event('load'));
-
 					document.getElementById('sy-content').setAttribute('contenteditable', 'true');
 					if (!CKEDITOR.instances['sy-content']) {
 						var editor = CKEDITOR.inline('sy-content', {
@@ -379,6 +378,10 @@
 										}
 									});
 									draggable(document.getElementById('sy-page-topbar'));
+
+									// Execute js code
+									import('data:text/javascript;charset=utf-8,' + encodeURIComponent(res.js));
+									window.dispatchEvent(new Event('load'));
 								}
 							}
 						});
