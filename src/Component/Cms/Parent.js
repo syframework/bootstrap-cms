@@ -481,6 +481,8 @@
 			if (timeoutId) {
 				clearTimeout(timeoutId);
 			}
+			// Reload preview only in coding mode
+			if (!document.querySelector('#sy-code-modal').classList.contains('show')) return;
 			timeoutId = setTimeout(loadPreview, 2000);
 		});
 	});
