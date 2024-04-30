@@ -40,17 +40,49 @@
 
 	<!-- BEGIN CODE_BLOCK -->
 	let htmlLoaded = false;
+	let codeChanged = false;
 
-	window.addEventListener("message", (event) => {
-		if (event.data === 'saved') {
-			htmlLoaded = false;
-			loadHtml();
-		}
-	}, false);
+	let codeEditorHtml;
+	let codeEditorCss;
+	let codeEditorJs;
 
-	const codeEditorHtml = ace.edit('codearea_codearea_html_{ID}');
-	const codeEditorCss = ace.edit('codearea_codearea_css_{ID}');
-	const codeEditorJs = ace.edit('codearea_codearea_js_{ID}');
+	let code = {};
+	let timeoutId;
+
+	function init() {
+		codeEditorHtml = ace.edit('codearea_codearea_html_{ID}');
+		codeEditorCss  = ace.edit('codearea_codearea_css_{ID}');
+		codeEditorJs   = ace.edit('codearea_codearea_js_{ID}');
+
+		window.addEventListener('resize', resizeCodeArea);
+
+		window.addEventListener("message", (event) => {
+			if (event.data === 'saved') {
+				htmlLoaded = false;
+				loadHtml();
+			}
+		}, false);
+
+		[codeEditorHtml, codeEditorCss, codeEditorJs].forEach(function (editor) {
+			// Listen change event
+			editor.session.on('change', function (delta) {
+				let id = editor.container.id;
+				if (delta.id === 1) {
+					code[id] = editor.getValue();
+					loadEditorState(editor);
+					return;
+				}
+				if (code[id] === editor.getValue()) return;
+				codeChanged = true;
+				if (timeoutId) {
+					clearTimeout(timeoutId);
+				}
+				// Live reload only if code editor is opened
+				if (!document.getElementById('sy-code-modal').classList.contains('show')) return;
+				timeoutId = setTimeout(loadPreview, 2000);
+			});
+		});
+	}
 
 	function resizeCodeArea() {
 		let codeEditorHeight = document.querySelector('#sy-code-modal .modal-body').offsetHeight;
@@ -80,16 +112,15 @@
 			.then(response => response.json())
 			.then(res => {
 				if (res.status === 'ok') {
-					ace.edit('codearea_codearea_html_{ID}').session.setValue(res.html);
+					codeEditorHtml.session.setValue(res.html);
 					htmlLoaded = true;
 					resizeCodeArea();
 				}
 			});
 	}
 
-	window.addEventListener('resize', resizeCodeArea);
-
 	document.getElementById('sy-code-modal').addEventListener('show.bs.modal', function (e) {
+		init();
 		loadHtml();
 		screenSplit(window.localStorage.getItem('screen-split-layout'));
 
@@ -105,6 +136,15 @@
 	});
 
 	document.getElementById('sy-code-modal').addEventListener('hide.bs.modal', function (e) {
+		if (!codeChanged) return;
+		let codeCloseConfirm = confirm((new DOMParser).parseFromString('{CONFIRM_CODE_CLOSE}', 'text/html').documentElement.textContent);
+		if (!codeCloseConfirm) {
+			e.preventDefault();
+			return;
+		}
+	});
+
+	document.getElementById('sy-code-modal').addEventListener('hidden.bs.modal', function (e) {
 		screenSplitReset();
 
 		// Disable inline edit button
@@ -464,28 +504,6 @@
 		if (!position) return;
 		editor.moveCursorTo(position.row, position.column);
 	}
-
-	let code = {};
-	let timeoutId;
-
-	[codeEditorHtml, codeEditorCss, codeEditorJs].forEach(function (editor) {
-		// Listen change event
-		editor.session.on('change', function (delta) {
-			let id = editor.container.id;
-			if (delta.id === 1) {
-				code[id] = editor.getValue();
-				loadEditorState(editor);
-				return;
-			}
-			if (code[id] === editor.getValue()) return;
-			if (timeoutId) {
-				clearTimeout(timeoutId);
-			}
-			// Reload preview only in coding mode
-			if (!document.querySelector('#sy-code-modal').classList.contains('show')) return;
-			timeoutId = setTimeout(loadPreview, 2000);
-		});
-	});
 
 	function loadEditorState(editor) {
 		setTimeout(function () {
