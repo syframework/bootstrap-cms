@@ -179,6 +179,7 @@ class Content extends WebComponent {
 			$js->setVars([
 				'ID'      => $this->id,
 				'GET_URL' => Url::build('api', 'content', ['id' => $this->id, 'version' => $version]),
+				'CONFIRM_CODE_CLOSE' => Str::escape($this->_('Code not saved, are you sure to close?')),
 			]);
 			$js->setBlock('CODE_BLOCK');
 			$this->setBlock('CODE_BTN_BLOCK');
@@ -225,7 +226,7 @@ class Content extends WebComponent {
 			$this->setComponent('DELETE_PAGE_FORM', $deleteForm);
 			$this->setBlock('DELETE_BTN_BLOCK');
 			$js->setVars([
-				'CONFIRM_DELETE' => $this->_('Are you sure to delete this page?'),
+				'CONFIRM_DELETE' => Str::escape($this->_('Are you sure to delete this page?')),
 				'DELETE_FORM_ID' => 'delete-' . $this->id,
 			]);
 			$js->setBlock('DELETE_BLOCK');
