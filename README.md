@@ -10,6 +10,12 @@ From your sy/project based application directory, run this command:
 composer install-plugin cms
 ```
 
+It's equivalent to:
+
+```bash
+composer require sy/bootstrap-cms
+```
+
 ---
 **NOTES**
 
@@ -33,19 +39,8 @@ Create a method in your ```Project\Application\Page``` class (in ```protected/sr
 	 * Content page
 	 */
 	public function contentAction() {
-		$service = \Project\Service\Container::getInstance();
-
-		$id = $this->get('id', 1);
-
-		// Retrieve content
-		$content = $service->content->retrieve(['id' => $id]);
-
-		if (empty($content)) {
-			throw new \Sy\Bootstrap\Application\Page\NotFoundException();
-		}
-
 		$this->setContentVars([
-			'CONTENT' => new \Sy\Bootstrap\Component\Cms\Content($id),
+			'CONTENT' => new \Sy\Bootstrap\Component\Cms\Content($this->get('id', 1)),
 		]);
 	}
 ```
