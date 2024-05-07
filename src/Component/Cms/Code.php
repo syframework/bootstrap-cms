@@ -53,7 +53,7 @@ class Code extends \Sy\Bootstrap\Component\Form {
 			'id'          => 'codearea_html_' . $this->id,
 			'placeholder' => 'HTML Code here...',
 		]);
-		$htmlArea->setMode('php');
+		$htmlArea->setMode('html');
 		$htmlArea->setTheme('monokai');
 
 		$this->addDiv([
