@@ -41,6 +41,7 @@
 	<!-- BEGIN CODE_BLOCK -->
 	let htmlLoaded = false;
 	let codeChanged = false;
+	let formSubmit = false;
 
 	let codeEditorHtml;
 	let codeEditorCss;
@@ -107,8 +108,10 @@
 	function loadHtml() {
 		if (htmlLoaded) return;
 
-		var timestamp = new Date().getTime();
-		fetch('{GET_URL}&ts=' + timestamp)
+		const location = new URL('{GET_URL}', window.location.origin);
+		location.searchParams.set('ts', new Date().getTime());
+
+		fetch(location.href)
 			.then(response => response.json())
 			.then(res => {
 				if (res.status === 'ok') {
@@ -153,7 +156,15 @@
 		editButton.removeAttribute('disabled');
 	});
 
+	window.addEventListener('beforeunload', function (e) {
+		if (!codeChanged) return;
+		if (formSubmit) return;
+		e.preventDefault();
+		return;
+	});
+
 	document.querySelector('#sy-code-modal form').addEventListener('submit', function (e) {
+		formSubmit = true;
 		this.js.value = codeEditorJs.getValue();
 		this.css.value = codeEditorCss.getValue();
 

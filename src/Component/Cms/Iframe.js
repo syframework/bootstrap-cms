@@ -1,7 +1,7 @@
 (function () {
 
-	var changed = false;
-	var csrf = '{CSRF}';
+	let changed = false;
+	let csrf = '{CSRF}';
 
 	CKEDITOR.dtd.$removeEmpty['span'] = false;
 	CKEDITOR.dtd.$removeEmpty['i'] = false;
@@ -37,10 +37,7 @@
 		if (!key || !value) return;
 		fetch('{TRANSLATE_URL}', {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded'
-			},
-			body: `key=${encodeURIComponent(key)}&value=${encodeURIComponent(value)}`
+			body: new URLSearchParams({key: key, value: value})
 		}).then(response => {
 			return response.json();
 		}).catch(error => console.error('There has been a problem with your fetch operation:', error));
@@ -271,19 +268,17 @@
 
 		fetch('{URL}', {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded'
-			},
-			body: Object.keys(data).map(key => `${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`).join("&")
+			body: new URLSearchParams(data)
 		})
 			.then(response => response.json())
 			.then(res => {
 				if (res.status === 'ko') {
-					alert((new DOMParser).parseFromString(res.message, 'text/html').documentElement.textContent);
 					if (res.csrf) {
 						csrf = res.csrf;
 						changed = true;
+						save(reload);
 					} else {
+						alert((new DOMParser).parseFromString(res.message, 'text/html').documentElement.textContent);
 						location.reload(true);
 					}
 				} else if (reload) {
@@ -294,12 +289,14 @@
 			.catch((error) => {
 				console.error('Error:', error);
 			});
-		changed = false;
+			changed = false;
 	}
 
 	function startEdit() {
-		var timestamp = new Date().getTime();
-		fetch('{GET_URL}&ts=' + timestamp)
+		const location = new URL('{GET_URL}', window.location.origin);
+		location.searchParams.set('ts', new Date().getTime());
+
+		fetch(location.href)
 			.then(response => response.json())
 			.then(res => {
 				if (res.status === 'ok') {
@@ -432,17 +429,17 @@
 	}, false);
 
 	setInterval(function () {
-		fetch('{CSRF_URL}').then(response => response.json()).then(data => {
+		const location = new URL('{CSRF_URL}', window.location.origin);
+		location.searchParams.set('ts', new Date().getTime());
+
+		fetch(location.href).then(response => response.json()).then(data => {
 			csrf = data.csrf;
 		});
 	}, 1200000);
 
 	window.addEventListener('beforeunload', function (e) {
-		if (changed) {
-			var confirmationMessage = 'Unsaved changes';
-			e.returnValue = confirmationMessage;
-			return confirmationMessage;
-		}
+		if (!changed) return;
+		e.preventDefault();
 	});
 
 	// Prevent navigation on empty href links

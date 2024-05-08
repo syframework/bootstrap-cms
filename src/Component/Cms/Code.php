@@ -26,7 +26,6 @@ class Code extends \Sy\Bootstrap\Component\Form {
 
 	public function init() {
 		$this->addCssCode('
-			#sy-code-modal .ace_editor {font-size: 14px;}
 			#sy-code-modal div.alert {display: none;}
 		');
 
@@ -35,6 +34,8 @@ class Code extends \Sy\Bootstrap\Component\Form {
 			'class'  => 'tab-content',
 			'action' => isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'])['path'] : ''
 		]);
+
+		$this->addCsrfField();
 
 		// Load content
 		$service = \Project\Service\Container::getInstance();
@@ -53,7 +54,7 @@ class Code extends \Sy\Bootstrap\Component\Form {
 			'id'          => 'codearea_html_' . $this->id,
 			'placeholder' => 'HTML Code here...',
 		]);
-		$htmlArea->setMode('html');
+		$htmlArea->setMode('html_elixir');
 		$htmlArea->setTheme('monokai');
 
 		$this->addDiv([
