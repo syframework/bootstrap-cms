@@ -467,7 +467,7 @@
 	}
 
 	function showLastSelectedTab() {
-		showTab(window.localStorage.getItem('sy-code-tab'));
+		showTab(window.localStorage.getItem('sy-code-tab') ?? 'sy-html-tab');
 	}
 
 	// Content iframe scroll position
