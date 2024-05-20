@@ -10,6 +10,9 @@ class Update extends \Sy\Bootstrap\Component\Form\Crud {
 	 */
 	private $id;
 
+	/**
+	 * @param string $id Content id
+	 */
 	public function __construct($id) {
 		parent::__construct('content', ['id' => $id]);
 		$this->id = $id;
