@@ -32,7 +32,7 @@ class Code extends \Sy\Bootstrap\Component\Form {
 		$this->setAttributes([
 			'id'     => 'code_form_' . $this->id,
 			'class'  => 'tab-content',
-			'action' => isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'])['path'] : ''
+			'action' => isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'])['path'] : '',
 		]);
 
 		$this->addCsrfField();
@@ -132,25 +132,19 @@ class Code extends \Sy\Bootstrap\Component\Form {
 				'updator_id' => $service->user->getCurrentUser()->id,
 			]);
 
-			$this->setSuccess($this->_('Source code updated successfully'));
+			return $this->jsonSuccess('Source code updated successfully');
 		} catch (\Sy\Component\Html\Form\Exception $e) {
 			$this->logWarning($e);
-			$this->setError($this->_('Please fill the form correctly'));
-			$this->cssArea->setContent(Str::escape($scss));
-			$this->jsArea->setContent(Str::escape($js));
+			return $this->jsonError('Please fill the form correctly');
 		} catch (\Sy\Db\MySql\Exception $e) {
 			if ($e->getCode() === 1644) {
-				$this->setSuccess($this->_('No change detected'));
+				return $this->jsonSuccess('No change detected', ['color' => 'info']);
 			}
 			$this->logWarning($e);
-			$this->setError($this->_('Database error'));
-			$this->cssArea->setContent(Str::escape($scss));
-			$this->jsArea->setContent(Str::escape($js));
+			return $this->jsonError('Database error');
 		} catch (\ScssPhp\ScssPhp\Exception\ParserException $e) {
 			$this->logWarning($e);
-			$this->setError('SCSS ' . $e->getMessage());
-			$this->cssArea->setContent(Str::escape($scss));
-			$this->jsArea->setContent(Str::escape($js));
+			return $this->jsonError('SCSS ' . $e->getMessage());
 		}
 	}
 

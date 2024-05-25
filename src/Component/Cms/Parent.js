@@ -174,6 +174,18 @@
 			saveEditorCursorState(editor);
 			saveEditorScrollState(editor);
 		});
+		sessionStorage.setItem('sy-code-tab', document.querySelector('#sy-code-modal button.active[data-bs-toggle="tab"]').getAttribute('id'));
+	});
+
+	document.querySelector('#sy-code-modal form').addEventListener('submitted.syform', e => {
+		const data = e.detail;
+
+		if (!data.ok) return;
+
+		codeChanged = false;
+		formSubmit = false;
+
+		loadPreview();
 	});
 
 	let modals = ['#sy-new-page-modal', '#sy-update-page-modal', '#sy-code-modal'];
@@ -439,7 +451,6 @@
 		tabEl.addEventListener('shown.bs.tab', event => {
 			let id = event.target.getAttribute('id');
 			focus(id);
-			window.localStorage.setItem('sy-code-tab', id);
 		});
 	});
 
@@ -467,7 +478,8 @@
 	}
 
 	function showLastSelectedTab() {
-		showTab(window.localStorage.getItem('sy-code-tab') ?? 'sy-html-tab');
+		showTab(sessionStorage.getItem('sy-code-tab') ?? 'sy-html-tab');
+		sessionStorage.removeItem('sy-code-tab');
 	}
 
 	// Content iframe scroll position
