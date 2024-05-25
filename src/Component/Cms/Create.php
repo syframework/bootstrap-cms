@@ -70,24 +70,19 @@ class Create extends \Sy\Bootstrap\Component\Form\Crud\Create {
 			$fields['creator_id'] = $service->user->getCurrentUser()->id;
 
 			$id = $this->getService()->create($fields);
-			$this->setSuccess(
-				$this->_('Page created successfully'),
-				\Sy\Bootstrap\Lib\Url::build('page', 'content', ['id' => $id])
+			return $this->jsonSuccess(
+				'Page created successfully',
+				['redirection' => \Sy\Bootstrap\Lib\Url::build('page', 'content', ['id' => $id])]
 			);
 		} catch (\Sy\Component\Html\Form\Exception $e) {
 			$this->logWarning($e);
-			if (is_null($this->getOption('error'))) {
-				$this->setError($this->_('Please fill the form correctly'));
-			}
-			$this->fill($_POST);
+			return $this->jsonError($this->getOption('error') ?? 'Please fill the form correctly');
 		} catch (\Sy\Db\MySql\DuplicateEntryException $e) {
 			$this->logWarning($e);
-			$this->setError($this->_('Page id already exists'));
-			$this->fill($_POST);
+			return $this->jsonError('Page id already exists');
 		} catch (\Sy\Db\MySql\Exception $e) {
 			$this->logWarning($e);
-			$this->setError($this->_('Database error'));
-			$this->fill($_POST);
+			return $this->jsonError('Database error');
 		}
 	}
 

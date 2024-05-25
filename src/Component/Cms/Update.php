@@ -58,24 +58,19 @@ class Update extends \Sy\Bootstrap\Component\Form\Crud {
 		try {
 			$this->validatePost();
 			$this->updateRow();
-			$this->setSuccess($this->_('Saved'), Url::build('page', 'content', ['id' => $this->id]));
+			return $this->jsonSuccess('Saved', ['redirection' => Url::build('page', 'content', ['id' => $this->id])]);
 		} catch (\Sy\Component\Html\Form\Exception $e) {
 			$this->logWarning($e);
-			if (is_null($this->getOption('error'))) {
-				$this->setError($this->_('Please fill the form correctly'));
-			}
-			$this->fill($_POST);
+			return $this->jsonError($this->getOption('error') ?? 'Please fill the form correctly');
 		} catch (\Sy\Db\MySql\DuplicateEntryException $e) {
 			$this->logWarning($e);
-			$this->setError($this->_('Alias already used'));
-			$this->fill($_POST);
+			return $this->jsonError('Alias already used');
 		} catch (\Sy\Db\MySql\Exception $e) {
 			if ($e->getCode() === 1644) {
-				$this->setSuccess($this->_('No change detected'));
+				return $this->jsonSuccess('No change detected', ['color' => 'info']);
 			}
 			$this->logWarning($e);
-			$this->setError($this->_('Database error'));
-			$this->fill($_POST);
+			return $this->jsonError('Database error');
 		}
 	}
 

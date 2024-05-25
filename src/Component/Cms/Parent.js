@@ -176,6 +176,17 @@
 		});
 	});
 
+	document.querySelector('#sy-code-modal form').addEventListener('submitted.syform', e => {
+		const data = e.detail;
+
+		if (!data.ok) return;
+
+		codeChanged = false;
+		formSubmit = false;
+
+		loadPreview();
+	});
+
 	let modals = ['#sy-new-page-modal', '#sy-update-page-modal', '#sy-code-modal'];
 	modals.forEach(function (modalId) {
 		if (!document.querySelector(modalId)) return;
