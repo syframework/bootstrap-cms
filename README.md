@@ -23,12 +23,10 @@ The install-plugin command will do all these following steps:
 
 1. Run composer require
 2. Copy templates files
-3. Copy lang files
-4. Create flyway migration file
-5. Copy scss files
-6. Copy assets files
-7. Run composer build
-8. Run composer db migrate
+3. Create flyway migration file
+4. Copy assets files
+5. Run composer build
+6. Run composer db migrate
 ---
 
 ## Page methods
