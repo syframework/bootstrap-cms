@@ -119,9 +119,6 @@ class Content extends WebComponent {
 
 		// Ckeditor hidden fields css
 		$this->addCssCode('[data-sycomponent] .cke_hidden {display: none;}');
-
-		// Hide flash message
-		$this->addCssCode('#flash-message {display:none;}');
 	}
 
 	/**
@@ -270,6 +267,7 @@ class Content extends WebComponent {
 	 * @param string $html
 	 */
 	private function initComponents($container, $html) {
+		if (empty($html)) return;
 		libxml_use_internal_errors(true);
 		$doc = new \DOMDocument();
 		$doc->loadHTML($html);

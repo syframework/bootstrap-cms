@@ -116,6 +116,10 @@ class Code extends \Sy\Bootstrap\Component\Form {
 			$scss = $this->post('css');
 			$js   = $this->post('js');
 
+			if (empty($html)) {
+				return $this->jsonError('Empty HTML');
+			}
+
 			// Check HTML
 			$html = self::checkHtml($html);
 
