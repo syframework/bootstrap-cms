@@ -136,13 +136,13 @@ class Code extends \Sy\Bootstrap\Component\Form {
 				'updator_id' => $service->user->getCurrentUser()->id,
 			]);
 
-			return $this->jsonSuccess('Source code updated successfully');
+			return $this->jsonSuccess('Source code updated successfully', ['reset' => false]);
 		} catch (\Sy\Component\Html\Form\Exception $e) {
 			$this->logWarning($e);
 			return $this->jsonError('Please fill the form correctly');
 		} catch (\Sy\Db\MySql\Exception $e) {
 			if ($e->getCode() === 1644) {
-				return $this->jsonSuccess('No change detected', ['color' => 'info']);
+				return $this->jsonSuccess('No change detected', ['color' => 'info', 'reset' => false]);
 			}
 			$this->logWarning($e);
 			return $this->jsonError('Database error');
