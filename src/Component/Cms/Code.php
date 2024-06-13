@@ -93,7 +93,7 @@ class Code extends \Sy\Bootstrap\Component\Form {
 			'id'          => 'codearea_js_' . $this->id,
 			'placeholder' => 'JS Code here...',
 		]);
-		$jsArea->setMode('javascript');
+		$jsArea->setMode('typescript');
 		$jsArea->setTheme('monokai');
 		$this->jsArea = $jsArea;
 
