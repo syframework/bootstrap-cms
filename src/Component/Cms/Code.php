@@ -25,10 +25,6 @@ class Code extends \Sy\Bootstrap\Component\Form {
 	}
 
 	public function init() {
-		$this->addCssCode('
-			#sy-code-modal div.alert {display: none;}
-		');
-
 		$this->setAttributes([
 			'id'     => 'code_form_' . $this->id,
 			'class'  => 'tab-content',
