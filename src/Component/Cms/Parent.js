@@ -127,10 +127,8 @@
 		loadHtml();
 		screenSplit(window.localStorage.getItem('screen-split-layout'));
 
-		// Disable inline edit button
-		let editButton = document.getElementById('sy-btn-page-update-start');
-		if (!editButton) return;
-		editButton.setAttribute('disabled', 'true');
+		// Disable toolbar buttons
+		document.querySelectorAll('#sy-page-toolbar .btn-circle').forEach(btn => btn.setAttribute('disabled', 'disabled'));
 	});
 
 	document.getElementById('sy-code-modal').addEventListener('shown.bs.modal', function (e) {
@@ -145,15 +143,14 @@
 			e.preventDefault();
 			return;
 		}
+		codeChanged = false;
 	});
 
 	document.getElementById('sy-code-modal').addEventListener('hidden.bs.modal', function (e) {
 		screenSplitReset();
 
-		// Disable inline edit button
-		let editButton = document.getElementById('sy-btn-page-update-start');
-		if (!editButton) return;
-		editButton.removeAttribute('disabled');
+		// Enable toolbar buttons
+		document.querySelectorAll('#sy-page-toolbar .btn-circle').forEach(btn => btn.removeAttribute('disabled'));
 	});
 
 	window.addEventListener('beforeunload', function (e) {

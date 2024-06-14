@@ -279,10 +279,10 @@
 						save(reload);
 					} else {
 						alert((new DOMParser).parseFromString(res.message, 'text/html').documentElement.textContent);
-						location.reload(true);
+						locationReload();
 					}
 				} else if (reload) {
-					location.reload(true);
+					locationReload();
 				}
 				window.parent.postMessage('saved', '*');
 			})
@@ -290,6 +290,12 @@
 				console.error('Error:', error);
 			});
 			changed = false;
+	}
+
+	function locationReload() {
+		const url = new URL(location.href);
+		url.searchParams.set('ts', Date.now());
+		location.href= url.href;
 	}
 
 	function startEdit() {
