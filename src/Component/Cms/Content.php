@@ -174,6 +174,7 @@ class Content extends WebComponent {
 
 			$js->setVars([
 				'ID'      => $this->id,
+				'ROOM_ID' => md5(PROJECT_KEY . 'content' . $this->id),
 				'GET_URL' => Url::build('api', 'content', ['id' => $this->id, 'version' => $version]),
 				'CONFIRM_CODE_CLOSE' => Str::escape($this->_('Code not saved, are you sure to close?')),
 			]);
