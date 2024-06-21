@@ -1,18 +1,158 @@
+import Peer from 'https://cdn.jsdelivr.net/npm/peerjs/+esm';
+
+class Node extends EventTarget {
+
+	static INITIALIZING = 0;
+	static INITIALIZED = 1;
+	static CONNECTING = 2;
+	static CONNECTED = 3;
+	static DISCONNECTED = 4;
+
+	#masterNodeId;
+
+	#peer;
+
+	#connections;
+
+	#isMaster;
+
+	#status;
+
+	constructor(id) {
+		super();
+		this.#masterNodeId = id;
+		this.#isMaster = false;
+		this.#status = Node.INITIALIZING;
+		this.#connections = new Map();
+		this.#initPeer();
+	}
+
+	destroy() {
+		this.#peer.destroy();
+	}
+
+	send(data, peerId) {
+		const connection = this.#connections.get(peerId);
+		if (!connection.open) return;
+		console.debug('Send data to peer', peerId, data);
+		connection.send(data);
+	}
+
+	broadcast(data) {
+		console.debug('Broadcast data', data);
+		this.#connections.forEach(connection => {
+			if (!connection.open) return;
+			connection.send(data);
+		});
+	}
+
+	getStatus() {
+		return this.#status;
+	}
+
+	getId() {
+		return this.#peer.id;
+	}
+
+	isMaster() {
+		return this.#isMaster;
+	}
+
+	isDisconnected() {
+		return this.#status === Node.DISCONNECTED;
+	}
+
+	#removeConnection(connection) {
+		console.debug('Remove connection', connection.peer);
+		this.#connections.delete(connection.peer);
+		if (this.#connections.size === 0) {
+			console.debug('I am disconnected');
+			this.#status = Node.DISCONNECTED;
+		}
+	}
+
+	#initPeer() {
+		this.#peer = new Peer(this.#masterNodeId, { reliable: true });
+		this.#peer.on('error', error => {
+			if (error.type !== 'unavailable-id') return;
+			this.#peer = new Peer({ reliable: true });
+			this.#peer.on('open', id => {
+				this.#status = Node.INITIALIZED;
+				console.debug('I am the node', id);
+
+				const connection = this.#peer.connect(this.#masterNodeId);
+				this.#status = Node.CONNECTING;
+				console.debug('Connecting to', connection.peer);
+
+				connection.on('open', () => {
+					console.debug('Connected to', connection.peer);
+					this.#connections.set(connection.peer, connection);
+					this.#status = Node.CONNECTED;
+				});
+
+				connection.on('data', data => {
+					console.debug('Data received from', connection.peer, data);
+					this.dispatchEvent(new CustomEvent('data', { detail: data }));
+				});
+
+				connection.on('close', () => {
+					console.debug('Connection closed with', connection.peer);
+					this.#removeConnection(connection);
+				});
+
+				connection.on('error', console.error);
+			});
+		});
+
+		this.#peer.on('open', id => {
+			console.debug('I am the master node', id);
+			this.#isMaster = true;
+			this.#status = Node.INITIALIZED;
+		});
+
+		this.#peer.on('connection', connection => {
+			console.debug('Connecting with', connection.peer);
+			this.#connections.set(connection.peer, connection);
+			this.#status = Node.CONNECTING;
+
+			connection.on('open', () => {
+				console.debug('Connected with', connection.peer);
+				this.#status = Node.CONNECTED;
+				this.dispatchEvent(new CustomEvent('connection', { detail: { peer: connection.peer } }));
+			});
+
+			connection.on('data', data => {
+				console.debug('Data received from', connection.peer, data);
+				this.dispatchEvent(new CustomEvent('data', { detail: data }));
+				this.broadcast(data);
+			});
+
+			connection.on('close', () => {
+				console.debug('Connection closed', connection);
+				this.#removeConnection(connection);
+			});
+
+			connection.on('error', console.error);
+		});
+	}
+
+}
+
 (function () {
 	<!-- BEGIN UPDATE_BLOCK -->
-	document.getElementById('sy-btn-page-update-start').addEventListener('click', function (e) {
-		e.preventDefault();
-		var frame = document.getElementById('sy-content-iframe');
-		if (!frame) return;
-		frame.contentWindow.postMessage('start', '*');
-		document.getElementById('sy-btn-page-update-start').classList.add("d-none");
-		document.getElementById('sy-btn-page-update-stop').classList.remove("d-none");
+		document.getElementById('sy-btn-page-update-start').addEventListener('click', function (e) {
+			e.preventDefault();
+			var frame = document.getElementById('sy-content-iframe');
+			if (!frame) return;
+			frame.contentWindow.postMessage('start', '*');
+			document.getElementById('sy-btn-page-update-start').classList.add("d-none");
+			document.getElementById('sy-btn-page-update-stop').classList.remove("d-none");
 
-		// Disable code edit button
-		let codeButton = document.getElementById('sy-btn-code');
-		if (!codeButton) return;
-		codeButton.setAttribute('disabled', 'true');
-	});
+			// Disable code edit button
+			let codeButton = document.getElementById('sy-btn-code');
+			if (!codeButton) return;
+			codeButton.setAttribute('disabled', 'true');
+		});
 
 	document.getElementById('sy-btn-page-update-stop').addEventListener('click', function (e) {
 		e.preventDefault();
@@ -30,16 +170,16 @@
 	<!-- END UPDATE_BLOCK -->
 
 	<!-- BEGIN DELETE_BLOCK -->
-	document.getElementById('sy-btn-page-delete').addEventListener('click', function (e) {
-		e.preventDefault();
-		if (confirm((new DOMParser).parseFromString('{CONFIRM_DELETE}', 'text/html').documentElement.textContent)) {
-			document.getElementById('{DELETE_FORM_ID}').submit();
-		}
-	});
+		document.getElementById('sy-btn-page-delete').addEventListener('click', function (e) {
+			e.preventDefault();
+			if (confirm((new DOMParser).parseFromString('{CONFIRM_DELETE}', 'text/html').documentElement.textContent)) {
+				document.getElementById('{DELETE_FORM_ID}').submit();
+			}
+		});
 	<!-- END DELETE_BLOCK -->
 
 	<!-- BEGIN CODE_BLOCK -->
-	let htmlLoaded = false;
+		let htmlLoaded = false;
 	let codeChanged = false;
 	let formSubmit = false;
 
@@ -47,26 +187,30 @@
 	let codeEditorCss;
 	let codeEditorJs;
 
+	const editors = {};
 	let code = {};
 	let timeoutId;
+	let applyingDelta = false;
 
 	function init() {
 		codeEditorHtml = ace.edit('codearea_codearea_html_{ID}');
-		codeEditorCss  = ace.edit('codearea_codearea_css_{ID}');
-		codeEditorJs   = ace.edit('codearea_codearea_js_{ID}');
+		codeEditorCss = ace.edit('codearea_codearea_css_{ID}');
+		codeEditorJs = ace.edit('codearea_codearea_js_{ID}');
 
 		window.addEventListener('resize', resizeCodeArea);
 
-		window.addEventListener("message", (event) => {
+		window.addEventListener("message", event => {
 			if (event.data === 'saved') {
 				htmlLoaded = false;
 				loadHtml();
 			}
 		}, false);
 
-		[codeEditorHtml, codeEditorCss, codeEditorJs].forEach(function (editor) {
+		[codeEditorHtml, codeEditorCss, codeEditorJs].forEach(editor => {
+			editors[editor.container.id] = editor;
+
 			// Listen change event
-			editor.session.on('change', function (delta) {
+			editor.session.on('change', delta => {
 				let id = editor.container.id;
 				if (delta.id === 1) {
 					code[id] = editor.getValue();
@@ -75,6 +219,12 @@
 				}
 				if (code[id] === editor.getValue()) return;
 				codeChanged = true;
+
+				// Send delta to master node
+				if (!applyingDelta) {
+					node.broadcast({ id: id, node: node.getId(), delta: delta });
+				}
+
 				if (timeoutId) {
 					clearTimeout(timeoutId);
 				}
@@ -83,6 +233,40 @@
 				timeoutId = setTimeout(loadPreview, 2000);
 			});
 		});
+
+		let node = setupNode();
+		setInterval(() => {
+			if (node.isDisconnected()) {
+				node.destroy();
+				node = setupNode();
+			}
+		}, 1000);
+	}
+
+	function setupNode() {
+		const node = new Node('{ROOM_ID}');
+
+		node.addEventListener('data', e => {
+			const data = e.detail;
+			if (data.node === node.getId()) return;
+			applyingDelta = true;
+			if (data.delta) {
+				editors[data.id].session.doc.applyDelta(data.delta);
+			}
+			if (data.value) {
+				editors[data.id].session.doc.setValue(data.value);
+			}
+			applyingDelta = false;
+		});
+
+		node.addEventListener('connection', e => {
+			const data = e.detail;
+			[codeEditorHtml, codeEditorCss, codeEditorJs].forEach(editor => {
+				node.send({ id: editor.container.id, node: node.getId(), value: editor.getValue() }, data.peer);
+			});
+		});
+
+		return node;
 	}
 
 	function resizeCodeArea() {
@@ -122,7 +306,7 @@
 			});
 	}
 
-	document.getElementById('sy-code-modal').addEventListener('show.bs.modal', function (e) {
+	document.getElementById('sy-code-modal').addEventListener('show.bs.modal', () => {
 		init();
 		loadHtml();
 		screenSplit(window.localStorage.getItem('screen-split-layout'));
@@ -131,12 +315,12 @@
 		document.querySelectorAll('#sy-page-toolbar .btn-circle').forEach(btn => btn.setAttribute('disabled', 'disabled'));
 	});
 
-	document.getElementById('sy-code-modal').addEventListener('shown.bs.modal', function (e) {
+	document.getElementById('sy-code-modal').addEventListener('shown.bs.modal', () => {
 		resizeCodeArea();
 		showLastSelectedTab();
 	});
 
-	document.getElementById('sy-code-modal').addEventListener('hide.bs.modal', function (e) {
+	document.getElementById('sy-code-modal').addEventListener('hide.bs.modal', e => {
 		if (!codeChanged) return;
 		let codeCloseConfirm = confirm((new DOMParser).parseFromString('{CONFIRM_CODE_CLOSE}', 'text/html').documentElement.textContent);
 		if (!codeCloseConfirm) {
@@ -146,11 +330,20 @@
 		codeChanged = false;
 	});
 
-	document.getElementById('sy-code-modal').addEventListener('hidden.bs.modal', function (e) {
+	document.getElementById('sy-code-modal').addEventListener('hidden.bs.modal', () => {
 		screenSplitReset();
 
 		// Enable toolbar buttons
 		document.querySelectorAll('#sy-page-toolbar .btn-circle').forEach(btn => btn.removeAttribute('disabled'));
+	});
+
+	// Tab change
+	document.querySelectorAll('#sy-code-modal [data-bs-toggle="tab"]').forEach(tab => {
+		tab.addEventListener('shown.bs.tab', () => {
+			codeEditorHtml.renderer.updateFull(true);
+			codeEditorCss.renderer.updateFull(true);
+			codeEditorJs.renderer.updateFull(true);
+		});
 	});
 
 	window.addEventListener('beforeunload', function (e) {
@@ -160,7 +353,7 @@
 		return;
 	});
 
-	document.querySelector('#sy-code-modal form').addEventListener('submit', function (e) {
+	document.querySelector('#sy-code-modal form').addEventListener('submit', () => {
 		formSubmit = true;
 		this.js.value = codeEditorJs.getValue();
 		this.css.value = codeEditorCss.getValue();
@@ -305,10 +498,10 @@
 		let leftWidth = 0;
 
 		function pauseEvent(e) {
-			if(e.stopPropagation) e.stopPropagation();
-			if(e.preventDefault) e.preventDefault();
-			e.cancelBubble=true;
-			e.returnValue=false;
+			if (e.stopPropagation) e.stopPropagation();
+			if (e.preventDefault) e.preventDefault();
+			e.cancelBubble = true;
+			e.returnValue = false;
 			return false;
 		}
 
@@ -408,8 +601,8 @@
 		let res = [];
 		folds.forEach(function (fold) {
 			res.push({
-				start: {row: fold.start.row + row, column: fold.start.column},
-				end: {row: fold.end.row + row, column: fold.end.column},
+				start: { row: fold.start.row + row, column: fold.start.column },
+				end: { row: fold.end.row + row, column: fold.end.column },
 				placeholder: fold.placeholder,
 				subFolds: getFolds(fold.subFolds, fold.start.row + row)
 			})
