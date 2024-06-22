@@ -337,29 +337,22 @@ class Node extends EventTarget {
 		document.querySelectorAll('#sy-page-toolbar .btn-circle').forEach(btn => btn.removeAttribute('disabled'));
 	});
 
-	// Tab change
-	document.querySelectorAll('#sy-code-modal [data-bs-toggle="tab"]').forEach(tab => {
-		tab.addEventListener('shown.bs.tab', () => {
-			codeEditorHtml.renderer.updateFull(true);
-			codeEditorCss.renderer.updateFull(true);
-			codeEditorJs.renderer.updateFull(true);
-		});
-	});
-
-	window.addEventListener('beforeunload', function (e) {
+	window.addEventListener('beforeunload', e => {
 		if (!codeChanged) return;
 		if (formSubmit) return;
 		e.preventDefault();
 		return;
 	});
 
-	document.querySelector('#sy-code-modal form').addEventListener('submit', () => {
+	document.querySelector('#sy-code-modal form').addEventListener('submit', e => {
 		formSubmit = true;
-		this.js.value = codeEditorJs.getValue();
-		this.css.value = codeEditorCss.getValue();
+
+		const form = e.target;
+		form.js.value = codeEditorJs.getValue();
+		form.css.value = codeEditorCss.getValue();
 
 		// Save editor state
-		[codeEditorHtml, codeEditorCss, codeEditorJs].forEach(function (editor) {
+		[codeEditorHtml, codeEditorCss, codeEditorJs].forEach(editor => {
 			saveEditorFoldState(editor);
 			saveEditorCursorState(editor);
 			saveEditorScrollState(editor);
@@ -636,10 +629,10 @@ class Node extends EventTarget {
 		return res;
 	}
 
-	// Editor focus on tab change
-	document.querySelectorAll('#sy-code-modal button[data-bs-toggle="tab"]').forEach(function (tabEl) {
-		tabEl.addEventListener('shown.bs.tab', event => {
-			let id = event.target.getAttribute('id');
+	// On tab change
+	document.querySelectorAll('#sy-code-modal button[data-bs-toggle="tab"]').forEach(tab => {
+		tab.addEventListener('shown.bs.tab', e => {
+			let id = e.target.getAttribute('id');
 			focus(id);
 		});
 	});
@@ -648,14 +641,17 @@ class Node extends EventTarget {
 		switch (id) {
 			case 'sy-css-tab':
 				codeEditorCss.focus();
+				codeEditorCss.renderer.updateFull();
 				break;
 
 			case 'sy-js-tab':
 				codeEditorJs.focus();
+				codeEditorJs.renderer.updateFull();
 				break;
 
 			default:
 				codeEditorHtml.focus();
+				codeEditorHtml.renderer.updateFull();
 				break;
 		}
 	}
