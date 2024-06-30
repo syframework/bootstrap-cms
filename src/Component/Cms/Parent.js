@@ -176,13 +176,10 @@ class LiveEditor {
 	#lock;
 	#changed;
 	#changeCallbacks;
-	#cursorPosition;
-	#cursorLock;
 
 	constructor(id, ydoc) {
 		this.id = id;
 		this.#lock = false;
-		this.#cursorLock = false;
 		this.#changed = false;
 		this.#changeCallbacks = [];
 		this.#editor = ace.edit(id);
@@ -206,15 +203,6 @@ class LiveEditor {
 			this.#changeCallbacks.forEach(f => f(delta));
 
 			this.#lock = false;
-		});
-
-		this.#editor.session.selection.on('changeCursor', () => {
-			if (this.#cursorLock) return;
-			this.#cursorLock = true;
-			const index = this.#editor.session.doc.positionToIndex(this.#editor.getCursorPosition(), 0);
-			console.debug('Cursor change', index);
-			this.#cursorPosition = Y.createRelativePositionFromTypeIndex(this.#ydoc.getText(this.id), index);
-			this.#cursorLock = false;
 		});
 
 		const value = this.getValue();
@@ -269,13 +257,14 @@ class LiveEditor {
 		return this.#editor.getValue();
 	}
 
-	updateCursorPosition() {
-		if (this.#cursorLock) return;
-		this.#cursorLock = true;
-		const position = Y.createAbsolutePositionFromRelativePosition(this.#cursorPosition, this.#ydoc);
-		console.debug('Update cursor position:', position.index);
+	getCursorRelativePosition() {
+		const index = this.#editor.session.doc.positionToIndex(this.#editor.getCursorPosition(), 0);
+		return Y.createRelativePositionFromTypeIndex(this.#ydoc.getText(this.id), index);
+	}
+
+	updateCursorPosition(cursorRelativePosition) {
+		const position = Y.createAbsolutePositionFromRelativePosition(cursorRelativePosition, this.#ydoc);
 		this.#editor.moveCursorToPosition(this.#editor.session.doc.indexToPosition(position.index, 0));
-		this.#cursorLock = false;
 	}
 
 	saveScrollState() {
@@ -455,7 +444,7 @@ class LiveEditor {
 		node.addEventListener('data', e => {
 			const data = e.detail;
 			if (data.diff) {
-				Y.applyUpdate(ydoc, new Uint8Array(data.diff));
+				applyUpdate(ydoc, new Uint8Array(data.diff));
 				if (data.stateVector) {
 					const diff = Y.encodeStateAsUpdate(ydoc, new Uint8Array(data.stateVector));
 					node.send({ peer: node.getId(), diff: diff }, data.peer);
@@ -465,7 +454,7 @@ class LiveEditor {
 				node.send({ peer: node.getId(), diff: diff, stateVector: Y.encodeStateVector(ydoc) }, data.peer);
 			} else if (data.state) {
 				ydoc = new Y.Doc();
-				Y.applyUpdate(ydoc, new Uint8Array(data.state));
+				applyUpdate(ydoc, new Uint8Array(data.state));
 				editors.forEach(editor => {
 					editor.setYdoc(ydoc);
 					editor.setValue(ydoc.getText(editor.id).toString());
@@ -487,9 +476,14 @@ class LiveEditor {
 		return node;
 	}
 
-	function updateCursorsPosition() {
+	function applyUpdate(ydoc, update) {
+		const positions = new Map();
 		editors.forEach(editor => {
-			editor.updateCursorPosition();
+			positions.set(editor.id, editor.getCursorRelativePosition());
+		});
+		Y.applyUpdate(ydoc, update);
+		positions.forEach((position, id) => {
+			editors.get(id).updateCursorPosition(position);
 		});
 	}
 
