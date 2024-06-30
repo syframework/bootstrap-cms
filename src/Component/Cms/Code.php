@@ -4,6 +4,7 @@ namespace Sy\Bootstrap\Component\Cms;
 use Masterminds\HTML5;
 use Sy\Bootstrap\Component\Form\Element\CodeArea;
 use Sy\Bootstrap\Lib\Str;
+use Sy\Bootstrap\Lib\Url;
 
 class Code extends \Sy\Bootstrap\Component\Form {
 
@@ -132,13 +133,13 @@ class Code extends \Sy\Bootstrap\Component\Form {
 				'updator_id' => $service->user->getCurrentUser()->id,
 			]);
 
-			return $this->jsonSuccess('Source code updated successfully', ['reset' => false]);
+			return $this->jsonSuccess('Source code updated successfully', ['redirection' => Url::build('page', 'content', ['id' => $this->id])]);
 		} catch (\Sy\Component\Html\Form\Exception $e) {
 			$this->logWarning($e);
 			return $this->jsonError('Please fill the form correctly');
 		} catch (\Sy\Db\MySql\Exception $e) {
 			if ($e->getCode() === 1644) {
-				return $this->jsonSuccess('No change detected', ['color' => 'info', 'reset' => false]);
+				return $this->jsonSuccess('No change detected', ['color' => 'info', 'redirection' => Url::build('page', 'content', ['id' => $this->id])]);
 			}
 			$this->logWarning($e);
 			return $this->jsonError('Database error');
