@@ -1,3 +1,4 @@
+import * as Y from 'https://cdn.jsdelivr.net/npm/yjs/+esm';
 import Peer from 'https://cdn.jsdelivr.net/npm/peerjs/+esm';
 
 class Node extends EventTarget {
@@ -9,6 +10,8 @@ class Node extends EventTarget {
 	static DISCONNECTED = 4;
 
 	#masterNodeId;
+
+	#id;
 
 	#peer;
 
@@ -33,6 +36,7 @@ class Node extends EventTarget {
 
 	send(data, peerId) {
 		const connection = this.#connections.get(peerId);
+		if (!connection) return;
 		if (!connection.open) return;
 		console.debug('Send data to peer', peerId, data);
 		connection.send(data);
@@ -51,7 +55,10 @@ class Node extends EventTarget {
 	}
 
 	getId() {
-		return this.#peer.id;
+		if (!this.#id) {
+			this.#id = this.#peer.id;
+		}
+		return this.#id;
 	}
 
 	isMaster() {
@@ -101,6 +108,18 @@ class Node extends EventTarget {
 				});
 
 				connection.on('error', console.error);
+
+				this.dispatchEvent(new Event('open'));
+			});
+
+			this.#peer.on('disconnected', () => {
+				console.debug('Peer disconnected');
+				this.#status = Node.DISCONNECTED;
+			});
+
+			this.#peer.on('close', () => {
+				console.debug('Peer close');
+				this.#status = Node.DISCONNECTED;
 			});
 		});
 
@@ -108,6 +127,7 @@ class Node extends EventTarget {
 			console.debug('I am the master node', id);
 			this.#isMaster = true;
 			this.#status = Node.INITIALIZED;
+			this.dispatchEvent(new Event('open'));
 		});
 
 		this.#peer.on('connection', connection => {
@@ -134,25 +154,222 @@ class Node extends EventTarget {
 
 			connection.on('error', console.error);
 		});
+
+		this.#peer.on('disconnected', () => {
+			console.debug('Peer disconnected');
+			this.#status = Node.DISCONNECTED;
+		});
+
+		this.#peer.on('close', () => {
+			console.debug('Peer close');
+			this.#status = Node.DISCONNECTED;
+		});
+	}
+
+}
+
+class LiveEditor {
+
+	id;
+	#editor;
+	#ydoc;
+	#lock;
+	#changed;
+	#changeCallbacks;
+	#cursorPosition;
+	#cursorLock;
+
+	constructor(id, ydoc) {
+		this.id = id;
+		this.#lock = false;
+		this.#cursorLock = false;
+		this.#changed = false;
+		this.#changeCallbacks = [];
+		this.#editor = ace.edit(id);
+		this.setYdoc(ydoc);
+
+		this.#editor.session.on('change', delta => {
+			if (this.#lock) return;
+			this.#lock = true;
+
+			const ytext = this.#ydoc.getText(this.id);
+			const start = this.#editor.session.doc.positionToIndex(delta.start, 0);
+			if (delta.action === 'insert') {
+				ytext.insert(start, delta.lines.join('\n'));
+			} else if (delta.action === 'remove') {
+				const length = delta.lines.join('\n').length;
+				ytext.delete(start, length);
+			}
+
+			this.#changed = true;
+
+			this.#changeCallbacks.forEach(f => f(delta));
+
+			this.#lock = false;
+		});
+
+		this.#editor.session.selection.on('changeCursor', () => {
+			if (this.#cursorLock) return;
+			this.#cursorLock = true;
+			const index = this.#editor.session.doc.positionToIndex(this.#editor.getCursorPosition(), 0);
+			console.debug('Cursor change', index);
+			this.#cursorPosition = Y.createRelativePositionFromTypeIndex(this.#ydoc.getText(this.id), index);
+			this.#cursorLock = false;
+		});
+
+		const value = this.getValue();
+		if (value) {
+			this.setYtext(value);
+		}
+	}
+
+	focus() {
+		this.#editor.focus();
+		this.#editor.renderer.updateFull();
+	}
+
+	changed() {
+		return this.#changed;
+	}
+
+	resetState() {
+		this.#changed = false;
+	}
+
+	resize() {
+		this.#editor.resize();
+	}
+
+	onChange(f) {
+		this.#changeCallbacks.push(f);
+	}
+
+	setYdoc(ydoc) {
+		this.#ydoc = ydoc;
+		this.#ydoc.getText(this.id).observe(() => {
+			this.setValue(this.#ydoc.getText(this.id).toString());
+		});
+	}
+
+	setYtext(value) {
+		if (this.#lock) return;
+		this.#lock = true;
+		this.#ydoc.getText(this.id).insert(0, value);
+		this.#lock = false;
+	}
+
+	setValue(value) {
+		if (this.#lock) return;
+		this.#lock = true;
+		this.#editor.session.setValue(value);
+		this.#lock = false;
+	}
+
+	getValue() {
+		return this.#editor.getValue();
+	}
+
+	updateCursorPosition() {
+		if (this.#cursorLock) return;
+		this.#cursorLock = true;
+		const position = Y.createAbsolutePositionFromRelativePosition(this.#cursorPosition, this.#ydoc);
+		console.debug('Update cursor position:', position.index);
+		this.#editor.moveCursorToPosition(this.#editor.session.doc.indexToPosition(position.index, 0));
+		this.#cursorLock = false;
+	}
+
+	saveScrollState() {
+		const editor = this.#editor;
+		localStorage.setItem('top_' + this.id, editor.session.getScrollTop());
+		localStorage.setItem('left_' + this.id, editor.session.getScrollLeft());
+	}
+
+	saveCursorState() {
+		localStorage.setItem('cursor_' + this.id, JSON.stringify(this.#editor.getCursorPosition()));
+	}
+
+	setFolds(folds) {
+		const Fold = ace.require("ace/edit_session/fold").Fold;
+		const res = [];
+		folds.forEach(function (fold) {
+			let f = new Fold(new ace.Range(fold.start.row, fold.start.column, fold.end.row, fold.end.column), fold.placeholder);
+			if (fold.subFolds.length > 0) {
+				setFolds(fold.subFolds).forEach(function (subfold) {
+					f.addSubFold(subfold);
+				});
+			}
+			res.push(f);
+		});
+		return res;
+	}
+
+	getFolds(folds, row = 0) {
+		if (folds.length === 0) return [];
+		let res = [];
+		folds.forEach(fold => {
+			res.push({
+				start: { row: fold.start.row + row, column: fold.start.column },
+				end: { row: fold.end.row + row, column: fold.end.column },
+				placeholder: fold.placeholder,
+				subFolds: this.getFolds(fold.subFolds, fold.start.row + row),
+			});
+		});
+		return res;
+	}
+
+	saveFoldState() {
+		const editor = this.#editor;
+		const id = this.id;
+		localStorage.setItem('folds_' + id, JSON.stringify(this.getFolds(editor.session.getAllFolds())));
+		localStorage.setItem('crc32_' + id, CRC32.str(editor.session.getValue()));
+	}
+
+	loadFoldState() {
+		const id = this.id;
+		const folds = JSON.parse(localStorage.getItem('folds_' + id));
+		if (!folds) return;
+		const crc32 = localStorage.getItem('crc32_' + id);
+		if (CRC32.str(this.#editor.session.getValue()) !== parseInt(crc32)) return;
+		this.#editor.session.addFolds(this.setFolds(folds));
+	}
+
+	loadScrollState() {
+		const editor = this.#editor;
+		editor.session.setScrollLeft(localStorage.getItem('left_' + this.id));
+		editor.session.setScrollTop(localStorage.getItem('top_' + this.id));
+	}
+
+	loadCursorState() {
+		const position = JSON.parse(localStorage.getItem('cursor_' + this.id));
+		if (!position) return;
+		this.#editor.moveCursorTo(position.row, position.column);
+	}
+
+	loadEditorState() {
+		setTimeout(() => {
+			this.loadFoldState();
+			this.loadScrollState();
+			this.loadCursorState()
+		}, 100);
 	}
 
 }
 
 (function () {
 	<!-- BEGIN UPDATE_BLOCK -->
-		document.getElementById('sy-btn-page-update-start').addEventListener('click', function (e) {
-			e.preventDefault();
-			var frame = document.getElementById('sy-content-iframe');
-			if (!frame) return;
-			frame.contentWindow.postMessage('start', '*');
-			document.getElementById('sy-btn-page-update-start').classList.add("d-none");
-			document.getElementById('sy-btn-page-update-stop').classList.remove("d-none");
+	document.getElementById('sy-btn-page-update-start').addEventListener('click', function (e) {
+		e.preventDefault();
+		var frame = document.getElementById('sy-content-iframe');
+		if (!frame) return;
+		frame.contentWindow.postMessage('start', '*');
+		document.getElementById('sy-btn-page-update-start').classList.add("d-none");
+		document.getElementById('sy-btn-page-update-stop').classList.remove("d-none");
 
-			// Disable code edit button
-			let codeButton = document.getElementById('sy-btn-code');
-			if (!codeButton) return;
-			codeButton.setAttribute('disabled', 'true');
-		});
+		// Disable code edit button
+		let codeButton = document.getElementById('sy-btn-code');
+		if (!codeButton) return;
+		codeButton.setAttribute('disabled', 'true');
+	});
 
 	document.getElementById('sy-btn-page-update-stop').addEventListener('click', function (e) {
 		e.preventDefault();
@@ -170,60 +387,57 @@ class Node extends EventTarget {
 	<!-- END UPDATE_BLOCK -->
 
 	<!-- BEGIN DELETE_BLOCK -->
-		document.getElementById('sy-btn-page-delete').addEventListener('click', function (e) {
-			e.preventDefault();
-			if (confirm((new DOMParser).parseFromString('{CONFIRM_DELETE}', 'text/html').documentElement.textContent)) {
-				document.getElementById('{DELETE_FORM_ID}').submit();
-			}
-		});
+	document.getElementById('sy-btn-page-delete').addEventListener('click', function (e) {
+		e.preventDefault();
+		if (confirm((new DOMParser).parseFromString('{CONFIRM_DELETE}', 'text/html').documentElement.textContent)) {
+			document.getElementById('{DELETE_FORM_ID}').submit();
+		}
+	});
 	<!-- END DELETE_BLOCK -->
 
 	<!-- BEGIN CODE_BLOCK -->
-		let htmlLoaded = false;
-	let codeChanged = false;
 	let formSubmit = false;
 
 	let codeEditorHtml;
 	let codeEditorCss;
 	let codeEditorJs;
 
-	const editors = {};
-	let code = {};
-	let timeoutId;
-	let applyingDelta = false;
+	let ydoc;
+	let node;
+
+	const editors = new Map();
 
 	function init() {
-		codeEditorHtml = ace.edit('codearea_codearea_html_{ID}');
-		codeEditorCss = ace.edit('codearea_codearea_css_{ID}');
-		codeEditorJs = ace.edit('codearea_codearea_js_{ID}');
+		ydoc = new Y.Doc();
+		codeEditorHtml = new LiveEditor('codearea_codearea_html_{ID}', ydoc);
+		codeEditorCss = new LiveEditor('codearea_codearea_css_{ID}', ydoc);
+		codeEditorJs = new LiveEditor('codearea_codearea_js_{ID}', ydoc);
+		[codeEditorHtml, codeEditorCss, codeEditorJs].forEach(editor => {
+			editors.set(editor.id, editor);
+		});
+
+		node = setupNode();
+		setInterval(() => {
+			if (node.isDisconnected()) {
+				node.destroy();
+				node = setupNode();
+			}
+		}, 1000);
 
 		window.addEventListener('resize', resizeCodeArea);
 
 		window.addEventListener("message", event => {
 			if (event.data === 'saved') {
-				htmlLoaded = false;
 				loadHtml();
 			}
 		}, false);
 
-		[codeEditorHtml, codeEditorCss, codeEditorJs].forEach(editor => {
-			editors[editor.container.id] = editor;
-
+		editors.forEach(editor => {
+			let timeoutId;
 			// Listen change event
-			editor.session.on('change', delta => {
-				let id = editor.container.id;
-				if (delta.id === 1) {
-					code[id] = editor.getValue();
-					loadEditorState(editor);
-					return;
-				}
-				if (code[id] === editor.getValue()) return;
-				codeChanged = true;
-
-				// Send delta to master node
-				if (!applyingDelta) {
-					node.broadcast({ id: id, node: node.getId(), delta: delta });
-				}
+			editor.onChange(() => {
+				const stateVector = Y.encodeStateVector(ydoc);
+				node.broadcast({ peer: node.getId(), stateVector: stateVector });
 
 				if (timeoutId) {
 					clearTimeout(timeoutId);
@@ -233,14 +447,6 @@ class Node extends EventTarget {
 				timeoutId = setTimeout(loadPreview, 2000);
 			});
 		});
-
-		let node = setupNode();
-		setInterval(() => {
-			if (node.isDisconnected()) {
-				node.destroy();
-				node = setupNode();
-			}
-		}, 1000);
 	}
 
 	function setupNode() {
@@ -248,69 +454,85 @@ class Node extends EventTarget {
 
 		node.addEventListener('data', e => {
 			const data = e.detail;
-			if (data.node === node.getId()) return;
-			applyingDelta = true;
-			if (data.delta) {
-				editors[data.id].session.doc.applyDelta(data.delta);
+			if (data.diff) {
+				Y.applyUpdate(ydoc, new Uint8Array(data.diff));
+				if (data.stateVector) {
+					const diff = Y.encodeStateAsUpdate(ydoc, new Uint8Array(data.stateVector));
+					node.send({ peer: node.getId(), diff: diff }, data.peer);
+				}
+			} else if (data.stateVector) {
+				const diff = Y.encodeStateAsUpdate(ydoc, new Uint8Array(data.stateVector));
+				node.send({ peer: node.getId(), diff: diff, stateVector: Y.encodeStateVector(ydoc) }, data.peer);
+			} else if (data.state) {
+				ydoc = new Y.Doc();
+				Y.applyUpdate(ydoc, new Uint8Array(data.state));
+				editors.forEach(editor => {
+					editor.setYdoc(ydoc);
+					editor.setValue(ydoc.getText(editor.id).toString());
+					loadPreview();
+				});
 			}
-			if (data.value) {
-				editors[data.id].session.doc.setValue(data.value);
-			}
-			applyingDelta = false;
 		});
 
 		node.addEventListener('connection', e => {
 			const data = e.detail;
-			[codeEditorHtml, codeEditorCss, codeEditorJs].forEach(editor => {
-				node.send({ id: editor.container.id, node: node.getId(), value: editor.getValue() }, data.peer);
-			});
+			node.send({ peer: node.getId(), state: Y.encodeStateAsUpdate(ydoc) }, data.peer);
+		});
+
+		node.addEventListener('open', () => {
+			if (!node.isMaster()) return;
+			loadHtml();
 		});
 
 		return node;
 	}
 
+	function updateCursorsPosition() {
+		editors.forEach(editor => {
+			editor.updateCursorPosition();
+		});
+	}
+
 	function resizeCodeArea() {
-		let codeEditorHeight = document.querySelector('#sy-code-modal .modal-body').offsetHeight;
-		let codeEditorWidth = document.querySelector('#sy-code-modal .modal-body').offsetWidth;
+		const codeEditorHeight = document.querySelector('#sy-code-modal .modal-body').offsetHeight;
+		const codeEditorWidth = document.querySelector('#sy-code-modal .modal-body').offsetWidth;
 
-		let htmlEditor = document.querySelector('#codearea_codearea_html_{ID}');
-		htmlEditor.style.height = codeEditorHeight + 'px';
-		htmlEditor.style.width = codeEditorWidth + 'px';
-		codeEditorHtml.resize();
-
-		let cssEditor = document.querySelector('#codearea_codearea_css_{ID}');
-		cssEditor.style.height = codeEditorHeight + 'px';
-		cssEditor.style.width = codeEditorWidth + 'px';
-		codeEditorCss.resize();
-
-		let jsEditor = document.querySelector('#codearea_codearea_js_{ID}');
-		jsEditor.style.height = codeEditorHeight + 'px';
-		jsEditor.style.width = codeEditorWidth + 'px';
-		codeEditorJs.resize();
+		editors.forEach(editor => {
+			const element = document.getElementById(editor.id);
+			element.style.height = codeEditorHeight + 'px';
+			element.style.width = codeEditorWidth + 'px';
+			editor.resize();
+		});
 	}
 
 	function loadHtml() {
-		if (htmlLoaded) return;
+		if (codeEditorHtml.getValue() !== '') return;
 
 		const location = new URL('{GET_URL}', window.location.origin);
-		location.searchParams.set('ts', new Date().getTime());
+		location.searchParams.set('ts', Date.now());
 
 		fetch(location.href)
 			.then(response => response.json())
 			.then(res => {
 				if (res.status === 'ok') {
-					codeEditorHtml.session.setValue(res.html);
-					htmlLoaded = true;
-					resizeCodeArea();
+					codeEditorHtml.setValue(res.html);
+					codeEditorHtml.setYtext(res.html);
 				}
 			});
 	}
 
-	document.getElementById('sy-code-modal').addEventListener('show.bs.modal', () => {
-		init();
-		loadHtml();
-		screenSplit(window.localStorage.getItem('screen-split-layout'));
+	function codeChanged() {
+		let codeChanged = false;
+		editors.forEach(editor => {
+			if (editor.changed()) codeChanged = true;
+		});
+		return codeChanged;
+	}
 
+	document.getElementById('sy-code-modal').addEventListener('show.bs.modal', () => init(), {once: true});
+
+	document.getElementById('sy-code-modal').addEventListener('show.bs.modal', () => {
+		screenSplit(window.localStorage.getItem('screen-split-layout'));
 		// Disable toolbar buttons
 		document.querySelectorAll('#sy-page-toolbar .btn-circle').forEach(btn => btn.setAttribute('disabled', 'disabled'));
 	});
@@ -321,13 +543,13 @@ class Node extends EventTarget {
 	});
 
 	document.getElementById('sy-code-modal').addEventListener('hide.bs.modal', e => {
-		if (!codeChanged) return;
-		let codeCloseConfirm = confirm((new DOMParser).parseFromString('{CONFIRM_CODE_CLOSE}', 'text/html').documentElement.textContent);
+		if (!codeChanged()) return;
+		if (formSubmit) return;
+		const codeCloseConfirm = confirm((new DOMParser).parseFromString('{CONFIRM_CODE_CLOSE}', 'text/html').documentElement.textContent);
 		if (!codeCloseConfirm) {
 			e.preventDefault();
 			return;
 		}
-		codeChanged = false;
 	});
 
 	document.getElementById('sy-code-modal').addEventListener('hidden.bs.modal', () => {
@@ -338,7 +560,7 @@ class Node extends EventTarget {
 	});
 
 	window.addEventListener('beforeunload', e => {
-		if (!codeChanged) return;
+		if (!codeChanged()) return;
 		if (formSubmit) return;
 		e.preventDefault();
 		return;
@@ -352,26 +574,15 @@ class Node extends EventTarget {
 		form.css.value = codeEditorCss.getValue();
 
 		// Save editor state
-		[codeEditorHtml, codeEditorCss, codeEditorJs].forEach(editor => {
-			saveEditorFoldState(editor);
-			saveEditorCursorState(editor);
-			saveEditorScrollState(editor);
+		editors.forEach(editor => {
+			editor.saveCursorState();
+			editor.saveFoldState();
+			editor.saveScrollState();
 		});
 		sessionStorage.setItem('sy-code-tab', document.querySelector('#sy-code-modal button.active[data-bs-toggle="tab"]').getAttribute('id'));
 	});
 
-	document.querySelector('#sy-code-modal form').addEventListener('submitted.syform', e => {
-		const data = e.detail;
-
-		if (!data.ok) return;
-
-		codeChanged = false;
-		formSubmit = false;
-
-		loadPreview();
-	});
-
-	let modals = ['#sy-new-page-modal', '#sy-update-page-modal', '#sy-code-modal'];
+	const modals = ['#sy-new-page-modal', '#sy-update-page-modal', '#sy-code-modal'];
 	modals.forEach(function (modalId) {
 		if (!document.querySelector(modalId)) return;
 		if (document.querySelector(modalId).querySelector('div.alert')) {
@@ -380,8 +591,8 @@ class Node extends EventTarget {
 		}
 	});
 
-	let alertElement = document.querySelector('#sy-code-modal div.alert');
-	let errorMsg = alertElement ? alertElement.textContent : null;
+	const alertElement = document.querySelector('#sy-code-modal div.alert');
+	const errorMsg = alertElement ? alertElement.textContent : null;
 	if (errorMsg) {
 		if (errorMsg.startsWith('SCSS')) {
 			var bsTab = new bootstrap.Tab(document.querySelector('#sy-css-tab'));
@@ -582,53 +793,6 @@ class Node extends EventTarget {
 		form.submit();
 	}
 
-	// Save the fold state
-	function saveEditorFoldState(editor) {
-		let id = editor.container.id;
-		localStorage.setItem('folds_' + id, JSON.stringify(getFolds(editor.session.getAllFolds())));
-		localStorage.setItem('crc32_' + id, CRC32.str(editor.session.getValue()));
-	}
-
-	function getFolds(folds, row = 0) {
-		if (folds.length === 0) return [];
-		let res = [];
-		folds.forEach(function (fold) {
-			res.push({
-				start: { row: fold.start.row + row, column: fold.start.column },
-				end: { row: fold.end.row + row, column: fold.end.column },
-				placeholder: fold.placeholder,
-				subFolds: getFolds(fold.subFolds, fold.start.row + row)
-			})
-		});
-		return res;
-	}
-
-	// Load the fold state
-	function loadEditorFoldState(editor) {
-		let id = editor.container.id;
-		let folds = JSON.parse(localStorage.getItem('folds_' + id));
-		if (!folds) return;
-		let crc32 = localStorage.getItem('crc32_' + id);
-		if (CRC32.str(editor.session.getValue()) !== parseInt(crc32)) return;
-		editor.session.addFolds(setFolds(folds));
-	}
-
-	var Fold = ace.require("ace/edit_session/fold").Fold;
-
-	function setFolds(folds) {
-		let res = [];
-		folds.forEach(function (fold) {
-			let f = new Fold(new ace.Range(fold.start.row, fold.start.column, fold.end.row, fold.end.column), fold.placeholder);
-			if (fold.subFolds.length > 0) {
-				setFolds(fold.subFolds).forEach(function (subfold) {
-					f.addSubFold(subfold);
-				});
-			}
-			res.push(f);
-		});
-		return res;
-	}
-
 	// On tab change
 	document.querySelectorAll('#sy-code-modal button[data-bs-toggle="tab"]').forEach(tab => {
 		tab.addEventListener('shown.bs.tab', e => {
@@ -638,22 +802,9 @@ class Node extends EventTarget {
 	});
 
 	function focus(id) {
-		switch (id) {
-			case 'sy-css-tab':
-				codeEditorCss.focus();
-				codeEditorCss.renderer.updateFull();
-				break;
-
-			case 'sy-js-tab':
-				codeEditorJs.focus();
-				codeEditorJs.renderer.updateFull();
-				break;
-
-			default:
-				codeEditorHtml.focus();
-				codeEditorHtml.renderer.updateFull();
-				break;
-		}
+		const codeArea = document.querySelector('#' + id + '-content .ace_editor');
+		if (!codeArea) return;
+		editors.get(codeArea.getAttribute('id')).focus();
 	}
 
 	function showTab(id) {
@@ -692,35 +843,6 @@ class Node extends EventTarget {
 		restoreScrollPosition();
 		iframe.contentWindow.addEventListener('scroll', saveScrollPosition);
 	});
-
-	// Editor scroll cursor position
-	function saveEditorScrollState(editor) {
-		localStorage.setItem('top_' + editor.container.id, editor.session.getScrollTop());
-		localStorage.setItem('left_' + editor.container.id, editor.session.getScrollLeft());
-	}
-
-	function loadEditorScrollState(editor) {
-		editor.session.setScrollLeft(localStorage.getItem('left_' + editor.container.id));
-		editor.session.setScrollTop(localStorage.getItem('top_' + editor.container.id));
-	}
-
-	function saveEditorCursorState(editor) {
-		localStorage.setItem('cursor_' + editor.container.id, JSON.stringify(editor.getCursorPosition()));
-	}
-
-	function loadEditorCursorState(editor) {
-		let position = JSON.parse(localStorage.getItem('cursor_' + editor.container.id));
-		if (!position) return;
-		editor.moveCursorTo(position.row, position.column);
-	}
-
-	function loadEditorState(editor) {
-		setTimeout(function () {
-			loadEditorFoldState(editor);
-			loadEditorScrollState(editor);
-			loadEditorCursorState(editor)
-		}, 100);
-	}
 	<!-- END CODE_BLOCK -->
 
 })();
