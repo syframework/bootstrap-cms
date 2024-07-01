@@ -176,6 +176,7 @@ class LiveEditor {
 	#lock;
 	#changed;
 	#changeCallbacks;
+	#undoManager;
 
 	constructor(id, ydoc) {
 		this.id = id;
@@ -200,7 +201,7 @@ class LiveEditor {
 
 			this.#changed = true;
 
-			this.#changeCallbacks.forEach(f => f(delta));
+			this.#changeCallbacks.forEach(f => f());
 
 			this.#lock = false;
 		});
@@ -208,7 +209,10 @@ class LiveEditor {
 		const value = this.getValue();
 		if (value) {
 			this.setYtext(value);
+			this.loadEditorState();
 		}
+
+		this.setYundoManager(new Y.UndoManager(this.#ydoc.getText(this.id)));
 	}
 
 	focus() {
@@ -244,6 +248,28 @@ class LiveEditor {
 		this.#lock = true;
 		this.#ydoc.getText(this.id).insert(0, value);
 		this.#lock = false;
+	}
+
+	setYundoManager(yUndoManager) {
+		this.#undoManager = yUndoManager;
+		const undoManager = this.#editor.session.getUndoManager();
+		undoManager.undo = () => {
+			const relPos = this.getCursorRelativePosition();
+			this.#undoManager.undo();
+			this.updateCursorPosition(relPos);
+		};
+		undoManager.redo = () => {
+			const relPos = this.getCursorRelativePosition();
+			this.#undoManager.redo();
+			this.updateCursorPosition(relPos);
+		};
+		this.#undoManager.on('stack-item-popped', () => {
+			this.#changeCallbacks.forEach(f => f());
+		});
+	}
+
+	getYundoManager() {
+		return this.#undoManager;
 	}
 
 	setValue(value) {
@@ -458,6 +484,7 @@ class LiveEditor {
 				editors.forEach(editor => {
 					editor.setYdoc(ydoc);
 					editor.setValue(ydoc.getText(editor.id).toString());
+					editor.setYundoManager(new Y.UndoManager(ydoc.getText(editor.id)));
 					loadPreview();
 				});
 			}
@@ -511,6 +538,8 @@ class LiveEditor {
 				if (res.status === 'ok') {
 					codeEditorHtml.setValue(res.html);
 					codeEditorHtml.setYtext(res.html);
+					codeEditorHtml.getYundoManager().clear();
+					codeEditorHtml.loadEditorState();
 				}
 			});
 	}
