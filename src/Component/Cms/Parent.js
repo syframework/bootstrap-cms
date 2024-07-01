@@ -448,18 +448,11 @@ class LiveEditor {
 		}, false);
 
 		editors.forEach(editor => {
-			let timeoutId;
 			// Listen change event
 			editor.onChange(() => {
 				const stateVector = Y.encodeStateVector(ydoc);
 				node.broadcast({ peer: node.getId(), stateVector: stateVector });
-
-				if (timeoutId) {
-					clearTimeout(timeoutId);
-				}
-				// Live reload only if code editor is opened
-				if (!document.getElementById('sy-code-modal').classList.contains('show')) return;
-				timeoutId = setTimeout(loadPreview, 2000);
+				loadPreview();
 			});
 		});
 	}
@@ -485,7 +478,6 @@ class LiveEditor {
 					editor.setYdoc(ydoc);
 					editor.setValue(ydoc.getText(editor.id).toString());
 					editor.setYundoManager(new Y.UndoManager(ydoc.getText(editor.id)));
-					loadPreview();
 				});
 			}
 		});
@@ -509,6 +501,7 @@ class LiveEditor {
 			positions.set(editor.id, editor.getCursorRelativePosition());
 		});
 		Y.applyUpdate(ydoc, update);
+		loadPreview();
 		positions.forEach((position, id) => {
 			editors.get(id).updateCursorPosition(position);
 		});
@@ -809,11 +802,18 @@ class LiveEditor {
 
 	// Live preview
 	function loadPreview() {
-		const form = document.getElementById('sy-content-form');
-		form.querySelector('input[name="html"]').value = codeEditorHtml.getValue();
-		form.querySelector('input[name="css"]').value = codeEditorCss.getValue();
-		form.querySelector('input[name="js"]').value = codeEditorJs.getValue();
-		form.submit();
+		if (globalThis.loadPreviewTimeout) {
+			clearTimeout(globalThis.loadPreviewTimeout);
+		}
+		// Live reload only if code editor is opened
+		if (!document.getElementById('sy-code-modal').classList.contains('show')) return;
+		globalThis.loadPreviewTimeout = setTimeout(() => {
+			const form = document.getElementById('sy-content-form');
+			form.querySelector('input[name="html"]').value = codeEditorHtml.getValue();
+			form.querySelector('input[name="css"]').value = codeEditorCss.getValue();
+			form.querySelector('input[name="js"]').value = codeEditorJs.getValue();
+			form.submit();
+		}, 2000);
 	}
 
 	// On tab change
