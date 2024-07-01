@@ -283,6 +283,10 @@ class LiveEditor {
 		return this.#editor.getValue();
 	}
 
+	isEmptySelection() {
+		return this.#editor.getSelectionRange().isEmpty();
+	}
+
 	getCursorRelativePosition() {
 		const index = this.#editor.session.doc.positionToIndex(this.#editor.getCursorPosition(), 0);
 		return Y.createRelativePositionFromTypeIndex(this.#ydoc.getText(this.id), index);
@@ -291,6 +295,26 @@ class LiveEditor {
 	updateCursorPosition(cursorRelativePosition) {
 		const position = Y.createAbsolutePositionFromRelativePosition(cursorRelativePosition, this.#ydoc);
 		this.#editor.moveCursorToPosition(this.#editor.session.doc.indexToPosition(position.index, 0));
+	}
+
+	getSelectionRelativeRange() {
+		const range = this.#editor.getSelectionRange();
+		const start = this.#editor.session.doc.positionToIndex(range.start, 0);
+		const end = this.#editor.session.doc.positionToIndex(range.end, 0);
+		return {
+			start: Y.createRelativePositionFromTypeIndex(this.#ydoc.getText(this.id), start),
+			end: Y.createRelativePositionFromTypeIndex(this.#ydoc.getText(this.id), end)
+		};
+	}
+
+	updateSelectionRange(start, end) {
+		const Range = ace.require("ace/range").Range;
+		const s = Y.createAbsolutePositionFromRelativePosition(start, this.#ydoc);
+		const e = Y.createAbsolutePositionFromRelativePosition(end, this.#ydoc);
+		const sPos = this.#editor.session.doc.indexToPosition(s.index, 0);
+		const ePos = this.#editor.session.doc.indexToPosition(e.index, 0);
+		const range = new Range(sPos.row, sPos.column, ePos.row, ePos.column);
+		this.#editor.selection.setRange(range);
 	}
 
 	saveScrollState() {
@@ -497,13 +521,19 @@ class LiveEditor {
 
 	function applyUpdate(ydoc, update) {
 		const positions = new Map();
+		const selections = new Map();
 		editors.forEach(editor => {
 			positions.set(editor.id, editor.getCursorRelativePosition());
+			if (editor.isEmptySelection()) return;
+			selections.set(editor.id, editor.getSelectionRelativeRange());
 		});
 		Y.applyUpdate(ydoc, update);
 		loadPreview();
 		positions.forEach((position, id) => {
 			editors.get(id).updateCursorPosition(position);
+		});
+		selections.forEach((selection, id) => {
+			editors.get(id).updateSelectionRange(selection.start, selection.end);
 		});
 	}
 
