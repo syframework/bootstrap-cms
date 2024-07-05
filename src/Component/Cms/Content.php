@@ -134,6 +134,10 @@ class Content extends WebComponent {
 		// Css
 		$this->addCssCode(__DIR__ . '/Parent.css');
 
+		// Ace Collaborative Extensions
+		$this->addCssLink('https://cdn.jsdelivr.net/npm/@convergencelabs/ace-collab-ext/dist/css/ace-collab-ext.min.css');
+		$this->addJsLink('https://cdn.jsdelivr.net/npm/@convergencelabs/ace-collab-ext/dist/umd/ace-collab-ext.min.js');
+
 		// CRC32 js
 		$this->addJsLink('https://cdn.jsdelivr.net/npm/crc-32/crc32.min.js');
 	}
@@ -174,6 +178,8 @@ class Content extends WebComponent {
 
 			$js->setVars([
 				'ID'      => $this->id,
+				'USER_ID' => $user->id,
+				'USER_NAME' => Str::convertName($user->firstname . ' ' . $user->lastname),
 				'ROOM_ID' => md5(PROJECT_KEY . 'content' . $this->id),
 				'GET_URL' => Url::build('api', 'content', ['id' => $this->id, 'version' => $version]),
 				'CONFIRM_CODE_CLOSE' => Str::escape($this->_('Code not saved, are you sure to close?')),
