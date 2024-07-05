@@ -85,17 +85,21 @@ class Node extends EventTarget {
 				console.debug('Peer error', error.type);
 				return;
 			}
+
+			console.debug('Master node already exists');
+
 			this.#peer = new Peer({ reliable: true });
+
 			this.#peer.on('open', id => {
 				this.#status = Node.INITIALIZED;
 				console.debug('I am the node', id);
 
 				const connection = this.#peer.connect(this.#masterNodeId);
 				this.#status = Node.CONNECTING;
-				console.debug('Connecting to', connection.peer);
+				console.debug('Connecting to master node', connection.peer);
 
 				connection.on('open', () => {
-					console.debug('Connected to', connection.peer);
+					console.debug('Connected to master node', connection.peer);
 					this.#connections.set(connection.peer, connection);
 					this.#status = Node.CONNECTED;
 				});
@@ -106,7 +110,7 @@ class Node extends EventTarget {
 				});
 
 				connection.on('close', () => {
-					console.debug('Connection closed with', connection.peer);
+					console.debug('Connection closed with master node', connection.peer);
 					this.#removeConnection(connection);
 					this.dispatchEvent(new CustomEvent('close', { detail: { peer: connection.peer } }));
 				});
@@ -121,8 +125,9 @@ class Node extends EventTarget {
 			});
 
 			this.#peer.on('disconnected', () => {
-				console.debug('Peer disconnected');
-				this.#status = Node.DISCONNECTED;
+				console.debug('Peer disconnected, try to reconnect');
+				this.#peer.reconnect();
+				this.#status = Node.INITIALIZING;
 			});
 
 			this.#peer.on('close', () => {
@@ -136,46 +141,47 @@ class Node extends EventTarget {
 			this.#isMaster = true;
 			this.#status = Node.INITIALIZED;
 			this.dispatchEvent(new Event('open'));
-		});
 
-		this.#peer.on('connection', connection => {
-			console.debug('Connecting with', connection.peer);
-			this.#status = Node.CONNECTING;
+			this.#peer.on('connection', connection => {
+				console.debug('Connecting with node', connection.peer);
+				this.#status = Node.CONNECTING;
 
-			connection.on('open', () => {
-				console.debug('Connected with', connection.peer);
-				this.#connections.set(connection.peer, connection);
-				this.#status = Node.CONNECTED;
-				this.dispatchEvent(new CustomEvent('connection', { detail: { peer: connection.peer } }));
+				connection.on('open', () => {
+					console.debug('Connected with node', connection.peer);
+					this.#connections.set(connection.peer, connection);
+					this.#status = Node.CONNECTED;
+					this.dispatchEvent(new CustomEvent('connection', { detail: { peer: connection.peer } }));
+				});
+
+				connection.on('data', data => {
+					console.debug('Data received from', connection.peer, data);
+					this.dispatchEvent(new CustomEvent('data', { detail: data }));
+					this.broadcast(data);
+				});
+
+				connection.on('close', () => {
+					console.debug('Connection closed with', connection.peer);
+					this.#removeConnection(connection);
+					this.dispatchEvent(new CustomEvent('close', { detail: { peer: connection.peer } }));
+				});
+
+				connection.on('error', error => {
+					console.debug('Connection error', error);
+					connection.close();
+					this.#status = Node.DISCONNECTED;
+				});
 			});
 
-			connection.on('data', data => {
-				console.debug('Data received from', connection.peer, data);
-				this.dispatchEvent(new CustomEvent('data', { detail: data }));
-				this.broadcast(data);
+			this.#peer.on('disconnected', () => {
+				console.debug('Master node disconnected, try to reconnect', this.#peer.id);
+				this.#peer.reconnect();
+				this.#status = Node.INITIALIZING;
 			});
 
-			connection.on('close', () => {
-				console.debug('Connection closed with', connection.peer);
-				this.#removeConnection(connection);
-				this.dispatchEvent(new CustomEvent('close', { detail: { peer: connection.peer } }));
-			});
-
-			connection.on('error', error => {
-				console.debug('Connection error', error);
-				connection.close();
+			this.#peer.on('close', () => {
+				console.debug('Master node close', this.#peer.id);
 				this.#status = Node.DISCONNECTED;
 			});
-		});
-
-		this.#peer.on('disconnected', () => {
-			console.debug('Peer disconnected');
-			this.#status = Node.DISCONNECTED;
-		});
-
-		this.#peer.on('close', () => {
-			console.debug('Peer close');
-			this.#status = Node.DISCONNECTED;
 		});
 	}
 
@@ -566,6 +572,7 @@ class LiveEditor {
 		node = setupNode();
 		setInterval(() => {
 			if (node.isDisconnected()) {
+				console.debug('Node is disconnected, destroy node and setup a new node');
 				node.destroy();
 				node = setupNode();
 			}
@@ -651,7 +658,10 @@ class LiveEditor {
 		});
 
 		node.addEventListener('open', () => {
-			if (!node.isMaster()) return;
+			if (!node.isMaster()) {
+				document.getElementById('loader-connecting').classList.remove('visually-hidden');
+				return;
+			}
 			loadHtml();
 		});
 
@@ -749,6 +759,11 @@ class LiveEditor {
 	document.getElementById('sy-code-modal').addEventListener('hidden.bs.modal', () => {
 		screenSplitReset();
 
+		// Enable toolbar buttons
+		document.querySelectorAll('#sy-page-toolbar .btn-circle').forEach(btn => btn.removeAttribute('disabled'));
+	});
+
+	window.addEventListener('load', () => {
 		// Enable toolbar buttons
 		document.querySelectorAll('#sy-page-toolbar .btn-circle').forEach(btn => btn.removeAttribute('disabled'));
 	});

@@ -1,9 +1,12 @@
 <!-- BEGIN CONTENT_BLOCK -->
 <iframe id="sy-content-iframe" name="sy-content-iframe" src="{IFRAME_URL}"></iframe>
 <div id="loader-backdrop">
-	<div class="d-flex justify-content-center align-items-center vh-100">
+	<div class="d-flex flex-column justify-content-center align-items-center vh-100">
 		<div class="spinner-border text-light" role="status">
 			<span class="visually-hidden">Loading...</span>
+		</div>
+		<div class="text-light">
+			<span id="loader-connecting" class="visually-hidden">{"Connecting to peer"}</span>
 		</div>
 	</div>
 </div>
@@ -24,7 +27,7 @@
 <div id="sy-page-toolbar">
 	<!-- BEGIN BACK_BTN_BLOCK -->
 	<div class="mb-1" title="{'Back to current version'}" data-bs-title="{'Back to current version'}" data-bs-placement="right" data-bs-container="body" data-bs-trigger="hover">
-		<a type="button" href="{BACK_URL}" class="btn btn-primary btn-circle">
+		<a type="button" href="{BACK_URL}" class="btn btn-primary btn-circle" disabled="disabled">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="currentColor" style="width:1em; height:1em; vertical-align: -.125em;">
 				<path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l192 192c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256 246.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-192 192z"/>
 			</svg>
@@ -33,7 +36,7 @@
 	<!-- END BACK_BTN_BLOCK -->
 	<!-- BEGIN RESTORE_BTN_BLOCK -->
 	<div class="mb-1" title="{'Restore this version'}" data-bs-title="{'Restore this version'}" data-bs-placement="right" data-bs-container="body" data-bs-trigger="hover">
-		<a type="button" href="{RESTORE_URL}" class="btn btn-primary btn-circle" data-confirm="{'Restore this version?'}" onclick="return confirm(this.dataset.confirm)">
+		<a type="button" href="{RESTORE_URL}" class="btn btn-primary btn-circle" data-confirm="{'Restore this version?'}" onclick="return confirm(this.dataset.confirm)" disabled="disabled">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style="width:1em; height:1em; vertical-align: -.125em;">
 				<path d="M48.5 224H40c-13.3 0-24-10.7-24-24V72c0-9.7 5.8-18.5 14.8-22.2s19.3-1.7 26.2 5.2L98.6 96.6c87.6-86.5 228.7-86.2 315.8 1c87.5 87.5 87.5 229.3 0 316.8s-229.3 87.5-316.8 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3c-62.2-62.2-162.7-62.5-225.3-1L185 183c6.9 6.9 8.9 17.2 5.2 26.2s-12.5 14.8-22.2 14.8H48.5z"/>
 			</svg>
@@ -42,7 +45,7 @@
 	<!-- END RESTORE_BTN_BLOCK -->
 	<!-- BEGIN CREATE_BTN_BLOCK -->
 	<div class="mb-1" title="{'New page'}" data-bs-title="{'New page'}" data-bs-placement="right" data-bs-container="body" data-bs-trigger="hover">
-		<button class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#sy-new-page-modal">
+		<button class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#sy-new-page-modal" disabled="disabled">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor" style="width:1em; height:1em; vertical-align: -.125em;">
 				<path d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H48c-17.7 0-32 14.3-32 32s14.3 32 32 32H192V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H256V80z"/>
 			</svg>
@@ -51,7 +54,7 @@
 	<!-- END CREATE_BTN_BLOCK -->
 	<!-- BEGIN DUPLICATE_BTN_BLOCK -->
 	<div class="mb-1" title="{'Duplicate page'}" data-bs-title="{'Duplicate page'}" data-bs-placement="right" data-bs-container="body" data-bs-trigger="hover">
-		<button class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#sy-duplicate-page-modal">
+		<button class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#sy-duplicate-page-modal" disabled="disabled">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style="width:1em; height:1em; vertical-align: -.125em;">
 				<path d="M288 448H64V224h64V160H64c-35.3 0-64 28.7-64 64V448c0 35.3 28.7 64 64 64H288c35.3 0 64-28.7 64-64V384H288v64zm-64-96H448c35.3 0 64-28.7 64-64V64c0-35.3-28.7-64-64-64H224c-35.3 0-64 28.7-64 64V288c0 35.3 28.7 64 64 64z"/>
 			</svg>
@@ -60,14 +63,14 @@
 	<!-- END DUPLICATE_BTN_BLOCK -->
 	<!-- BEGIN UPDATE_INLINE_BTN_BLOCK -->
 	<div class="mb-1" title="{'Start editing'}" data-bs-title="{'Start editing'}" data-bs-placement="right" data-bs-container="body" data-bs-trigger="hover">
-		<button class="btn btn-primary btn-circle" id="sy-btn-page-update-start">
+		<button class="btn btn-primary btn-circle" id="sy-btn-page-update-start" disabled="disabled">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style="width:1em; height:1em; vertical-align: -.125em;">
 				<path d="M410.3 231l11.3-11.3-33.9-33.9-62.1-62.1L291.7 89.8l-11.3 11.3-22.6 22.6L58.6 322.9c-10.4 10.4-18 23.3-22.2 37.4L1 480.7c-2.5 8.4-.2 17.5 6.1 23.7s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L387.7 253.7 410.3 231zM160 399.4l-9.1 22.7c-4 3.1-8.5 5.4-13.3 6.9L59.4 452l23-78.1c1.4-4.9 3.8-9.4 6.9-13.3l22.7-9.1v32c0 8.8 7.2 16 16 16h32zM362.7 18.7L348.3 33.2 325.7 55.8 314.3 67.1l33.9 33.9 62.1 62.1 33.9 33.9 11.3-11.3 22.6-22.6 14.5-14.5c25-25 25-65.5 0-90.5L453.3 18.7c-25-25-65.5-25-90.5 0zm-47.4 168l-144 144c-6.2 6.2-16.4 6.2-22.6 0s-6.2-16.4 0-22.6l144-144c6.2-6.2 16.4-6.2 22.6 0s6.2 16.4 0 22.6z"/>
 			</svg>
 		</button>
 	</div>
 	<div class="mb-1" title="{'Finish editing'}" data-bs-title="{'Finish editing'}" data-bs-placement="right" data-bs-container="body" data-bs-trigger="hover">
-		<button class="btn btn-success btn-circle d-none" id="sy-btn-page-update-stop">
+		<button class="btn btn-success btn-circle d-none" id="sy-btn-page-update-stop" disabled="disabled">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor" style="width:1em; height:1em; vertical-align: -.125em;">
 				<path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/>
 			</svg>
@@ -76,7 +79,7 @@
 	<!-- END UPDATE_INLINE_BTN_BLOCK -->
 	<!-- BEGIN UPDATE_BTN_BLOCK -->
 	<div class="mb-1" title="{'Page settings'}" data-bs-title="{'Page settings'}" data-bs-placement="right" data-bs-container="body" data-bs-trigger="hover">
-		<button class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#sy-update-page-modal">
+		<button class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#sy-update-page-modal" disabled="disabled">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style="width:1em; height:1em; vertical-align: -.125em;">
 				<path d="M495.9 166.6c3.2 8.7 .5 18.4-6.4 24.6l-43.3 39.4c1.1 8.3 1.7 16.8 1.7 25.4s-.6 17.1-1.7 25.4l43.3 39.4c6.9 6.2 9.6 15.9 6.4 24.6c-4.4 11.9-9.7 23.3-15.8 34.3l-4.7 8.1c-6.6 11-14 21.4-22.1 31.2c-5.9 7.2-15.7 9.6-24.5 6.8l-55.7-17.7c-13.4 10.3-28.2 18.9-44 25.4l-12.5 57.1c-2 9.1-9 16.3-18.2 17.8c-13.8 2.3-28 3.5-42.5 3.5s-28.7-1.2-42.5-3.5c-9.2-1.5-16.2-8.7-18.2-17.8l-12.5-57.1c-15.8-6.5-30.6-15.1-44-25.4L83.1 425.9c-8.8 2.8-18.6 .3-24.5-6.8c-8.1-9.8-15.5-20.2-22.1-31.2l-4.7-8.1c-6.1-11-11.4-22.4-15.8-34.3c-3.2-8.7-.5-18.4 6.4-24.6l43.3-39.4C64.6 273.1 64 264.6 64 256s.6-17.1 1.7-25.4L22.4 191.2c-6.9-6.2-9.6-15.9-6.4-24.6c4.4-11.9 9.7-23.3 15.8-34.3l4.7-8.1c6.6-11 14-21.4 22.1-31.2c5.9-7.2 15.7-9.6 24.5-6.8l55.7 17.7c13.4-10.3 28.2-18.9 44-25.4l12.5-57.1c2-9.1 9-16.3 18.2-17.8C227.3 1.2 241.5 0 256 0s28.7 1.2 42.5 3.5c9.2 1.5 16.2 8.7 18.2 17.8l12.5 57.1c15.8 6.5 30.6 15.1 44 25.4l55.7-17.7c8.8-2.8 18.6-.3 24.5 6.8c8.1 9.8 15.5 20.2 22.1 31.2l4.7 8.1c6.1 11 11.4 22.4 15.8 34.3zM256 336a80 80 0 1 0 0-160 80 80 0 1 0 0 160z"/>
 			</svg>
@@ -85,7 +88,7 @@
 	<!-- END UPDATE_BTN_BLOCK -->
 	<!-- BEGIN CODE_BTN_BLOCK -->
 	<div class="mb-1" title="{'Source code'}" data-bs-title="{'Source code'}" data-bs-placement="right" data-bs-container="body" data-bs-trigger="hover">
-		<button class="btn btn-primary btn-circle" id="sy-btn-code" data-bs-toggle="modal" data-bs-target="#sy-code-modal">
+		<button class="btn btn-primary btn-circle" id="sy-btn-code" data-bs-toggle="modal" data-bs-target="#sy-code-modal" disabled="disabled">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" fill="currentColor" style="width:1em; height:1em; vertical-align: -.125em;">
 				<path d="M392.8 1.2c-17-4.9-34.7 5-39.6 22l-128 448c-4.9 17 5 34.7 22 39.6s34.7-5 39.6-22l128-448c4.9-17-5-34.7-22-39.6zm80.6 120.1c-12.5 12.5-12.5 32.8 0 45.3L562.7 256l-89.4 89.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l112-112c12.5-12.5 12.5-32.8 0-45.3l-112-112c-12.5-12.5-32.8-12.5-45.3 0zm-306.7 0c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3l112 112c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256l89.4-89.4c12.5-12.5 12.5-32.8 0-45.3z"/>
 			</svg>
@@ -94,7 +97,7 @@
 	<!-- END CODE_BTN_BLOCK -->
 	<!-- BEGIN DELETE_BTN_BLOCK -->
 	<div class="mb-1" title="{'Delete page'}" data-bs-title="{'Delete page'}" data-bs-placement="right" data-bs-container="body" data-bs-trigger="hover">
-		<button class="btn btn-primary btn-circle" id="sy-btn-page-delete">
+		<button class="btn btn-primary btn-circle" id="sy-btn-page-delete" disabled="disabled">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor" style="width:1em; height:1em; vertical-align: -.125em;">
 				<path d="M135.2 17.7C140.6 6.8 151.7 0 163.8 0H284.2c12.1 0 23.2 6.8 28.6 17.7L320 32h96c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 96 0 81.7 0 64S14.3 32 32 32h96l7.2-14.3zM32 128H416V448c0 35.3-28.7 64-64 64H96c-35.3 0-64-28.7-64-64V128zm96 64c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16z"/>
 			</svg>
@@ -104,7 +107,7 @@
 	<!-- END DELETE_BTN_BLOCK -->
 	<!-- BEGIN HISTORY_BTN_BLOCK -->
 	<div class="mb-1" title="{'Version history'}" data-bs-title="{'Version history'}" data-bs-placement="right" data-bs-container="body" data-bs-trigger="hover">
-		<button class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#sy-history-modal">
+		<button class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#sy-history-modal" disabled="disabled">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style="width:1em; height:1em; vertical-align: -.125em;">
 				<path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/>
 			</svg>
