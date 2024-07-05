@@ -81,7 +81,10 @@ class Node extends EventTarget {
 	#initPeer() {
 		this.#peer = new Peer(this.#masterNodeId, { reliable: true });
 		this.#peer.on('error', error => {
-			if (error.type !== 'unavailable-id') return;
+			if (error.type !== 'unavailable-id') {
+				console.debug('Peer error', error.type);
+				return;
+			}
 			this.#peer = new Peer({ reliable: true });
 			this.#peer.on('open', id => {
 				this.#status = Node.INITIALIZED;
@@ -105,9 +108,14 @@ class Node extends EventTarget {
 				connection.on('close', () => {
 					console.debug('Connection closed with', connection.peer);
 					this.#removeConnection(connection);
+					this.dispatchEvent(new CustomEvent('close', { detail: { peer: connection.peer } }));
 				});
 
-				connection.on('error', console.error);
+				connection.on('error', error => {
+					console.debug('Connection error', error);
+					connection.close();
+					this.#status = Node.DISCONNECTED;
+				});
 
 				this.dispatchEvent(new Event('open'));
 			});
@@ -132,11 +140,11 @@ class Node extends EventTarget {
 
 		this.#peer.on('connection', connection => {
 			console.debug('Connecting with', connection.peer);
-			this.#connections.set(connection.peer, connection);
 			this.#status = Node.CONNECTING;
 
 			connection.on('open', () => {
 				console.debug('Connected with', connection.peer);
+				this.#connections.set(connection.peer, connection);
 				this.#status = Node.CONNECTED;
 				this.dispatchEvent(new CustomEvent('connection', { detail: { peer: connection.peer } }));
 			});
@@ -148,11 +156,16 @@ class Node extends EventTarget {
 			});
 
 			connection.on('close', () => {
-				console.debug('Connection closed', connection);
+				console.debug('Connection closed with', connection.peer);
 				this.#removeConnection(connection);
+				this.dispatchEvent(new CustomEvent('close', { detail: { peer: connection.peer } }));
 			});
 
-			connection.on('error', console.error);
+			connection.on('error', error => {
+				console.debug('Connection error', error);
+				connection.close();
+				this.#status = Node.DISCONNECTED;
+			});
 		});
 
 		this.#peer.on('disconnected', () => {
@@ -176,13 +189,23 @@ class LiveEditor {
 	#lock;
 	#changed;
 	#changeCallbacks;
+	#changeSelectionCallbacks;
+	#changeCursorCallbacks;
 	#undoManager;
+	#cursors;
+	#selections;
+	#cursorManager;
+	#selectionManager;
 
 	constructor(id, ydoc) {
 		this.id = id;
 		this.#lock = false;
 		this.#changed = false;
 		this.#changeCallbacks = [];
+		this.#changeSelectionCallbacks = [];
+		this.#changeCursorCallbacks = [];
+		this.#cursors = new Map();
+		this.#selections = new Map();
 		this.#editor = ace.edit(id);
 		this.setYdoc(ydoc);
 
@@ -206,6 +229,32 @@ class LiveEditor {
 			this.#lock = false;
 		});
 
+		this.#editor.session.selection.on('changeSelection', () => {
+			const ranges = this.#editor.getSelection().getAllRanges();
+			const r = [];
+			ranges.forEach(range => {
+				r.push({
+					start: {
+						row: range.start.row,
+						column: range.start.column
+					},
+					end: {
+						row: range.end.row,
+						column: range.end.column
+					}
+				});
+			});
+			this.#changeSelectionCallbacks.forEach(f => f(r));
+
+			// TO DO: handle multiple cursors mode properly
+			this.#editor.selection._emit('changeCursor');
+		});
+
+		this.#editor.session.selection.on('changeCursor', () => {
+			const position = this.#editor.getCursorPosition();
+			this.#changeCursorCallbacks.forEach(f => f(position));
+		});
+
 		const value = this.getValue();
 		if (value) {
 			this.setYtext(value);
@@ -213,6 +262,9 @@ class LiveEditor {
 		}
 
 		this.setYundoManager(new Y.UndoManager(this.#ydoc.getText(this.id)));
+
+		this.#cursorManager = new AceCollabExt.AceMultiCursorManager(this.#editor.session);
+		this.#selectionManager = new AceCollabExt.AceMultiSelectionManager(this.#editor.session);
 	}
 
 	focus() {
@@ -234,6 +286,14 @@ class LiveEditor {
 
 	onChange(f) {
 		this.#changeCallbacks.push(f);
+	}
+
+	onChangeSelection(f) {
+		this.#changeSelectionCallbacks.push(f);
+	}
+
+	onChangeCursor(f) {
+		this.#changeCursorCallbacks.push(f);
 	}
 
 	setYdoc(ydoc) {
@@ -283,6 +343,47 @@ class LiveEditor {
 		return this.#editor.getValue();
 	}
 
+	isEmptySelection() {
+		return this.#editor.getSelectionRange().isEmpty();
+	}
+
+	moveCursor(id, user, position) {
+		if (this.#cursors.has(id)) {
+			this.#cursorManager.clearCursor(id);
+		} else {
+			this.#cursors.set(id, user);
+			this.#cursorManager.addCursor(id, user.name, this.#idToColor(user.id), position);
+		}
+		this.#cursorManager.setCursor(id, position);
+	}
+
+	removeCursor(id) {
+		if (!this.#cursors.has(id)) return;
+		this.#cursors.delete(id);
+		this.#cursorManager.removeCursor(id);
+	}
+
+	moveSelection(id, user, ranges) {
+		const Range = ace.require("ace/range").Range;
+		const r = [];
+		ranges.forEach(range => {
+			r.push(new Range(range.start.row, range.start.column, range.end.row, range.end.column));
+		});
+		if (this.#selections.has(id)) {
+			this.#selectionManager.clearSelection(id);
+		} else {
+			this.#selections.set(id, user);
+			this.#selectionManager.addSelection(id, user.name, this.#idToColor(user.id), r);
+		}
+		this.#selectionManager.setSelection(id, r);
+	}
+
+	removeSelection(id) {
+		if (!this.#selections.has(id)) return;
+		this.#selections.delete(id);
+		this.#selectionManager.removeSelection(id);
+	}
+
 	getCursorRelativePosition() {
 		const index = this.#editor.session.doc.positionToIndex(this.#editor.getCursorPosition(), 0);
 		return Y.createRelativePositionFromTypeIndex(this.#ydoc.getText(this.id), index);
@@ -291,6 +392,26 @@ class LiveEditor {
 	updateCursorPosition(cursorRelativePosition) {
 		const position = Y.createAbsolutePositionFromRelativePosition(cursorRelativePosition, this.#ydoc);
 		this.#editor.moveCursorToPosition(this.#editor.session.doc.indexToPosition(position.index, 0));
+	}
+
+	getSelectionRelativeRange() {
+		const range = this.#editor.getSelectionRange();
+		const start = this.#editor.session.doc.positionToIndex(range.start, 0);
+		const end = this.#editor.session.doc.positionToIndex(range.end, 0);
+		return {
+			start: Y.createRelativePositionFromTypeIndex(this.#ydoc.getText(this.id), start),
+			end: Y.createRelativePositionFromTypeIndex(this.#ydoc.getText(this.id), end)
+		};
+	}
+
+	updateSelectionRange(start, end) {
+		const Range = ace.require("ace/range").Range;
+		const s = Y.createAbsolutePositionFromRelativePosition(start, this.#ydoc);
+		const e = Y.createAbsolutePositionFromRelativePosition(end, this.#ydoc);
+		const sPos = this.#editor.session.doc.indexToPosition(s.index, 0);
+		const ePos = this.#editor.session.doc.indexToPosition(e.index, 0);
+		const range = new Range(sPos.row, sPos.column, ePos.row, ePos.column);
+		this.#editor.selection.setRange(range);
 	}
 
 	saveScrollState() {
@@ -368,6 +489,15 @@ class LiveEditor {
 		}, 100);
 	}
 
+	#idToColor(id) {
+		const colors = ['#D50000', '#C51162', '#AA00FF', '#7C4DFF', '#3D5AFE', '#2962FF', '#0277BD', '#006064', '#00796B', '#087990', '#2E7D32', '#DD2C00', '#8D6E63', '#757575', '#546E7A'];
+		let hash = 0;
+		for (let i = 0; i < id.length; i++) {
+			hash = id.charCodeAt(i) + ((hash << 5) - hash);
+		}
+		return colors[Math.abs(hash) % colors.length];
+	}
+
 }
 
 (function () {
@@ -423,6 +553,8 @@ class LiveEditor {
 	const editors = new Map();
 
 	function init() {
+		document.getElementById('loader-backdrop').style.display = 'block';
+
 		ydoc = new Y.Doc();
 		codeEditorHtml = new LiveEditor('codearea_codearea_html_{ID}', ydoc);
 		codeEditorCss = new LiveEditor('codearea_codearea_css_{ID}', ydoc);
@@ -448,18 +580,35 @@ class LiveEditor {
 		}, false);
 
 		editors.forEach(editor => {
-			let timeoutId;
 			// Listen change event
 			editor.onChange(() => {
 				const stateVector = Y.encodeStateVector(ydoc);
 				node.broadcast({ peer: node.getId(), stateVector: stateVector });
+				loadPreview();
+			});
 
-				if (timeoutId) {
-					clearTimeout(timeoutId);
-				}
-				// Live reload only if code editor is opened
-				if (!document.getElementById('sy-code-modal').classList.contains('show')) return;
-				timeoutId = setTimeout(loadPreview, 2000);
+			editor.onChangeSelection(ranges => {
+				node.broadcast({
+					peer: node.getId(),
+					user: {
+						id: '{USER_ID}',
+						name: '{USER_NAME}',
+					},
+					ranges: ranges,
+					editorId: editor.id,
+				});
+			});
+
+			editor.onChangeCursor(position => {
+				node.broadcast({
+					peer: node.getId(),
+					user: {
+						id: '{USER_ID}',
+						name: '{USER_NAME}',
+					},
+					position: position,
+					editorId: editor.id,
+				});
 			});
 		});
 	}
@@ -485,8 +634,14 @@ class LiveEditor {
 					editor.setYdoc(ydoc);
 					editor.setValue(ydoc.getText(editor.id).toString());
 					editor.setYundoManager(new Y.UndoManager(ydoc.getText(editor.id)));
-					loadPreview();
 				});
+				document.getElementById('loader-backdrop').style.display = 'none';
+			} else if (data.position) {
+				if (data.peer === node.getId()) return;
+				editors.get(data.editorId).moveCursor(data.peer, data.user, data.position);
+			} else if (data.ranges) {
+				if (data.peer === node.getId()) return;
+				editors.get(data.editorId).moveSelection(data.peer, data.user, data.ranges);
 			}
 		});
 
@@ -500,17 +655,32 @@ class LiveEditor {
 			loadHtml();
 		});
 
+		node.addEventListener('close', e => {
+			const data = e.detail;
+			editors.forEach(editor => {
+				editor.removeCursor(data.peer);
+				editor.removeSelection(data.peer);
+			});
+		});
+
 		return node;
 	}
 
 	function applyUpdate(ydoc, update) {
 		const positions = new Map();
+		const selections = new Map();
 		editors.forEach(editor => {
 			positions.set(editor.id, editor.getCursorRelativePosition());
+			if (editor.isEmptySelection()) return;
+			selections.set(editor.id, editor.getSelectionRelativeRange());
 		});
 		Y.applyUpdate(ydoc, update);
+		loadPreview();
 		positions.forEach((position, id) => {
 			editors.get(id).updateCursorPosition(position);
+		});
+		selections.forEach((selection, id) => {
+			editors.get(id).updateSelectionRange(selection.start, selection.end);
 		});
 	}
 
@@ -540,6 +710,7 @@ class LiveEditor {
 					codeEditorHtml.setYtext(res.html);
 					codeEditorHtml.getYundoManager().clear();
 					codeEditorHtml.loadEditorState();
+					document.getElementById('loader-backdrop').style.display = 'none';
 				}
 			});
 	}
@@ -809,11 +980,18 @@ class LiveEditor {
 
 	// Live preview
 	function loadPreview() {
-		const form = document.getElementById('sy-content-form');
-		form.querySelector('input[name="html"]').value = codeEditorHtml.getValue();
-		form.querySelector('input[name="css"]').value = codeEditorCss.getValue();
-		form.querySelector('input[name="js"]').value = codeEditorJs.getValue();
-		form.submit();
+		if (globalThis.loadPreviewTimeout) {
+			clearTimeout(globalThis.loadPreviewTimeout);
+		}
+		// Live reload only if code editor is opened
+		if (!document.getElementById('sy-code-modal').classList.contains('show')) return;
+		globalThis.loadPreviewTimeout = setTimeout(() => {
+			const form = document.getElementById('sy-content-form');
+			form.querySelector('input[name="html"]').value = codeEditorHtml.getValue();
+			form.querySelector('input[name="css"]').value = codeEditorCss.getValue();
+			form.querySelector('input[name="js"]').value = codeEditorJs.getValue();
+			form.submit();
+		}, 2000);
 	}
 
 	// On tab change
