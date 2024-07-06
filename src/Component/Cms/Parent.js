@@ -11,8 +11,6 @@ class Node extends EventTarget {
 
 	#masterNodeId;
 
-	#id;
-
 	#peer;
 
 	#connections;
@@ -55,10 +53,7 @@ class Node extends EventTarget {
 	}
 
 	getId() {
-		if (!this.#id) {
-			this.#id = this.#peer.id;
-		}
-		return this.#id;
+		return this.#peer.id;
 	}
 
 	isMaster() {
@@ -671,6 +666,7 @@ class LiveEditor {
 				editor.removeCursor(data.peer);
 				editor.removeSelection(data.peer);
 			});
+			// TO DO: broadcast remove cursor and selections to all peers
 		});
 
 		return node;
