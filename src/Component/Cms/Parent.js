@@ -80,6 +80,7 @@ class Node extends EventTarget {
 		this.#peer.on('error', error => {
 			if (error.type !== 'unavailable-id') {
 				console.debug('Peer error', error.type);
+				this.#status = Node.DISCONNECTED;
 				return;
 			}
 
