@@ -8,6 +8,7 @@ class Node extends EventTarget {
 	static CONNECTING = 2;
 	static CONNECTED = 3;
 	static DISCONNECTED = 4;
+	static DESTROYED = 5;
 
 	#masterNodeId;
 
@@ -30,6 +31,7 @@ class Node extends EventTarget {
 
 	destroy() {
 		this.#peer.destroy();
+		this.#status = Node.DESTROYED;
 	}
 
 	send(data, peerId) {
@@ -565,10 +567,11 @@ class LiveEditor {
 		});
 
 		node = setupNode();
-		setInterval(() => {
+		setInterval(async () => {
 			if (node.isDisconnected()) {
 				console.debug('Node is disconnected, destroy node and setup a new node');
 				node.destroy();
+				await new Promise(r => setTimeout(r, 1000));
 				node = setupNode();
 			}
 		}, 1000);
