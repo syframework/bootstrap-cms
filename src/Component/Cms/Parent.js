@@ -567,12 +567,13 @@ class LiveEditor {
 		});
 
 		node = setupNode();
-		setInterval(async () => {
+		setInterval(() => {
 			if (node.isDisconnected()) {
 				console.debug('Node is disconnected, destroy node and setup a new node');
 				node.destroy();
-				await new Promise(r => setTimeout(r, 1000));
-				node = setupNode();
+				setTimeout(() => {
+					node = setupNode();
+				}, 1000);
 			}
 		}, 1000);
 
@@ -674,6 +675,14 @@ class LiveEditor {
 
 		return node;
 	}
+
+	window.addEventListener('offline', () => {
+		console.debug('You have gone offline!');
+		node.destroy();
+		setTimeout(() => {
+			node = setupNode();
+		}, 1000);
+	});
 
 	function applyUpdate(ydoc, update) {
 		const positions = new Map();
