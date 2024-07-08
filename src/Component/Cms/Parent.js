@@ -123,9 +123,8 @@ class Node extends EventTarget {
 			});
 
 			this.#peer.on('disconnected', () => {
-				console.debug('Peer disconnected, try to reconnect');
-				this.#peer.reconnect();
-				this.#status = Node.INITIALIZING;
+				console.debug('Peer disconnected');
+				this.#status = Node.DISCONNECTED;
 			});
 
 			this.#peer.on('close', () => {
@@ -171,9 +170,8 @@ class Node extends EventTarget {
 			});
 
 			this.#peer.on('disconnected', () => {
-				console.debug('Master node disconnected, try to reconnect', this.#peer.id);
-				this.#peer.reconnect();
-				this.#status = Node.INITIALIZING;
+				console.debug('Master node disconnected', this.#peer.id);
+				this.#status = Node.DISCONNECTED;
 			});
 
 			this.#peer.on('close', () => {
