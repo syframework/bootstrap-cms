@@ -88,6 +88,12 @@ class Node extends EventTarget {
 
 			this.#peer = new Peer({ reliable: true });
 
+			this.#peer.on('error', error => {
+				console.debug('Peer error', error.type);
+				this.#status = Node.DISCONNECTED;
+				return;
+			});
+
 			this.#peer.on('open', id => {
 				this.#status = Node.INITIALIZED;
 				console.debug('I am the node', id);
@@ -95,6 +101,11 @@ class Node extends EventTarget {
 				const connection = this.#peer.connect(this.#masterNodeId);
 				this.#status = Node.CONNECTING;
 				console.debug('Connecting to master node', connection.peer);
+				setTimeout(() => {
+					if (this.#status !== Node.CONNECTING) return;
+					console.debug('Connection timeout');
+					this.#status = Node.DISCONNECTED;
+				}, 10000);
 
 				connection.on('open', () => {
 					console.debug('Connected to master node', connection.peer);
