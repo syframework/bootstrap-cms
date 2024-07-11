@@ -164,7 +164,6 @@ class Node extends EventTarget {
 				connection.on('data', data => {
 					console.debug('Data received from', connection.peer, data);
 					this.dispatchEvent(new CustomEvent('data', { detail: data }));
-					this.broadcast(data);
 				});
 
 				connection.on('close', () => {
@@ -599,6 +598,7 @@ class LiveEditor {
 			// Listen change event
 			editor.onChange(() => {
 				const stateVector = Y.encodeStateVector(ydoc);
+				// Step 1: Send state vector
 				node.broadcast({ peer: node.getId(), stateVector: stateVector });
 				loadPreview();
 			});
@@ -634,37 +634,68 @@ class LiveEditor {
 
 		node.addEventListener('data', e => {
 			const data = e.detail;
+
 			if (data.diff) {
+				// Step 3: Receive diff => apply diff
 				applyUpdate(ydoc, new Uint8Array(data.diff));
-				if (data.stateVector) {
-					const diff = Y.encodeStateAsUpdate(ydoc, new Uint8Array(data.stateVector));
-					node.send({ peer: node.getId(), diff: diff }, data.peer);
+			}
+
+			if (data.stateVector && data.diff) {
+				// Step 3: Receive diff + state vector => send diff
+				const diff = Y.encodeStateAsUpdate(ydoc, new Uint8Array(data.stateVector));
+				const params = { peer: node.getId(), diff: diff };
+				if (data.init) {
+					params.init = true;
+					if (node.isMaster()) {
+						const stateVector = Y.encodeStateVector(ydoc);
+						node.broadcast({ peer: node.getId(), stateVector: stateVector });
+					}
 				}
-				document.getElementById('loader-backdrop').style.display = 'none';
-				if (data.resetUndoManager) {
+				node.send(params, data.peer);
+			} else if (data.stateVector) {
+				// Step 2: Receive state vector => send diff + state vector
+				const diff = Y.encodeStateAsUpdate(ydoc, new Uint8Array(data.stateVector));
+				const stateVector = Y.encodeStateVector(ydoc);
+				const params = { peer: node.getId(), diff: diff, stateVector: stateVector };
+				if (data.init) {
+					params.init = true;
+				}
+				node.send(params, data.peer);
+			} else if (data.diff) {
+				if (node.isMaster()) {
+					const stateVector = Y.encodeStateVector(ydoc);
+					node.broadcast({ peer: node.getId(), stateVector: stateVector });
+				} else if (data.init) {
+					document.getElementById('loader-backdrop').style.display = 'none';
 					editors.forEach(editor => {
 						editor.setYundoManager(new Y.UndoManager(ydoc.getText(editor.id)));
 					});
 				}
-			} else if (data.stateVector) {
-				const diff = Y.encodeStateAsUpdate(ydoc, new Uint8Array(data.stateVector));
-				const params = { peer: node.getId(), diff: diff, stateVector: Y.encodeStateVector(ydoc) };
-				if (data.resetUndoManager) {
-					params.resetUndoManager = true;
-				}
-				node.send(params, data.peer);
 			} else if (data.position) {
 				if (data.peer === node.getId()) return;
 				editors.get(data.editorId).moveCursor(data.peer, data.user, data.position);
+				if (node.isMaster()) {
+					node.broadcast(data);
+				}
 			} else if (data.ranges) {
 				if (data.peer === node.getId()) return;
 				editors.get(data.editorId).moveSelection(data.peer, data.user, data.ranges);
+				if (node.isMaster()) {
+					node.broadcast(data);
+				}
+			} else if (data.remove) {
+				editors.forEach(editor => {
+					editor.removeCursor(data.peer);
+					editor.removeSelection(data.peer);
+				});
 			}
 		});
 
+		// When a node initially connects to the master node
 		node.addEventListener('connection', e => {
 			const data = e.detail;
-			node.send({ peer: node.getId(), stateVector: Y.encodeStateVector(ydoc), resetUndoManager: true }, data.peer);
+			// Step 1: Send state vector
+			node.send({ peer: node.getId(), stateVector: Y.encodeStateVector(ydoc), init: true }, data.peer);
 		});
 
 		node.addEventListener('open', () => {
@@ -681,7 +712,8 @@ class LiveEditor {
 				editor.removeCursor(data.peer);
 				editor.removeSelection(data.peer);
 			});
-			// TO DO: broadcast remove cursor and selections to all peers
+			// Broadcast remove cursor and selections to all peers
+			node.broadcast({ peer: data.peer, remove: true });
 		});
 
 		return node;
