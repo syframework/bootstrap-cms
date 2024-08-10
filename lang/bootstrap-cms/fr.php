@@ -20,4 +20,5 @@ return [
 	'Public page' => 'Page publique',
 	'Code not saved, are you sure to close?' => 'Code non enregistré, êtes-vous sûr de fermer ?',
 	'Connecting to peer' => 'Edition en mode collaboratif en cours de connexion...',
+	'Connected users' => 'Utilisateurs connectés',
 ];
