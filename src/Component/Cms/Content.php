@@ -180,7 +180,7 @@ class Content extends WebComponent {
 				'ID'      => $this->id,
 				'USER_ID' => $user->id,
 				'USER_NAME' => Str::convertName($user->firstname . ' ' . $user->lastname),
-				'ROOM_ID' => md5(PROJECT_KEY . 'content' . $this->id),
+				'ROOM_ID' => md5(PROJECT_URL . 'content' . $this->id),
 				'GET_URL' => Url::build('api', 'content', ['id' => $this->id, 'version' => $version]),
 				'CONFIRM_CODE_CLOSE' => Str::escape($this->_('Code not saved, are you sure to close?')),
 			]);

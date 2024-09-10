@@ -512,6 +512,47 @@ class LiveEditor {
 
 }
 
+class UsersList extends EventTarget {
+
+	#users;
+
+	constructor() {
+		super();
+		this.#users = new Map();
+	}
+
+	setUsers(users) {
+		this.#users.clear();
+		users.forEach(user => {
+			this.setUser(user.id, user.name);
+		});
+		this.dispatchEvent(new CustomEvent('change', { detail: this.#users }));
+	}
+
+	setUser(id, name) {
+		this.#users.set(id, name);
+		this.dispatchEvent(new CustomEvent('change', { detail: this.#users }));
+	}
+
+	hasUser(id) {
+		return this.#users.has(id);
+	}
+
+	deleteUser(id) {
+		this.#users.delete(id);
+		this.dispatchEvent(new CustomEvent('change', { detail: this.#users }));
+	}
+
+	toJson() {
+		const users = [];
+		this.#users.forEach((name, id) => {
+			users.push({id: id, name: name});
+		});
+		return JSON.stringify(users);
+	}
+
+}
+
 (function () {
 	<!-- BEGIN UPDATE_BLOCK -->
 	document.getElementById('sy-btn-page-update-start').addEventListener('click', function (e) {
@@ -562,7 +603,16 @@ class LiveEditor {
 	let ydoc;
 	let node;
 
+	const usersList = new UsersList();
+
 	const editors = new Map();
+
+	const peers = new Map();
+
+	const me = {
+		id: '{USER_ID}',
+		name: '{USER_NAME}',
+	};
 
 	function init() {
 		document.getElementById('loader-backdrop').style.display = 'block';
@@ -594,6 +644,21 @@ class LiveEditor {
 			}
 		}, false);
 
+		// Connected users button
+		const connectedUsersBtn = document.querySelector('#sy-connected-users-btn');
+		const popover = new bootstrap.Popover(connectedUsersBtn);
+
+		usersList.addEventListener('change', e => {
+			const users = e.detail;
+			const usersList = `<h6>${connectedUsersBtn.dataset.title}</h6><ul>${Array.from(users, ([key, value]) => `<li>${value}</li>`).join('')}</ul>`;
+			popover.setContent({
+				'.popover-body': usersList
+			});
+			connectedUsersBtn.querySelector('.badge').innerHTML = users.size;
+		});
+
+		usersList.setUser(me.id, me.name);
+
 		editors.forEach(editor => {
 			// Listen change event
 			editor.onChange(() => {
@@ -606,10 +671,7 @@ class LiveEditor {
 			editor.onChangeSelection(ranges => {
 				node.broadcast({
 					peer: node.getId(),
-					user: {
-						id: '{USER_ID}',
-						name: '{USER_NAME}',
-					},
+					user: me,
 					ranges: ranges,
 					editorId: editor.id,
 				});
@@ -618,10 +680,7 @@ class LiveEditor {
 			editor.onChangeCursor(position => {
 				node.broadcast({
 					peer: node.getId(),
-					user: {
-						id: '{USER_ID}',
-						name: '{USER_NAME}',
-					},
+					user: me,
 					position: position,
 					editorId: editor.id,
 				});
@@ -688,6 +747,19 @@ class LiveEditor {
 					editor.removeCursor(data.peer);
 					editor.removeSelection(data.peer);
 				});
+			} else if (data.users) {
+				usersList.setUsers(JSON.parse(data.users));
+			}
+
+			// User
+			if (data.user && !usersList.hasUser(data.user.id)) {
+				usersList.setUser(data.user.id, data.user.name);
+				if (node.isMaster()) {
+					node.broadcast({ users: usersList.toJson() });
+				}
+			}
+			if (data.user) {
+				peers.set(data.peer, data.user.id);
 			}
 		});
 
@@ -712,6 +784,10 @@ class LiveEditor {
 				editor.removeCursor(data.peer);
 				editor.removeSelection(data.peer);
 			});
+
+			// Remove user
+			usersList.deleteUser(peers.get(data.peer));
+
 			// Broadcast remove cursor and selections to all peers
 			node.broadcast({ peer: data.peer, remove: true });
 		});
