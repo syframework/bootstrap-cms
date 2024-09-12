@@ -87,7 +87,7 @@ class Content extends WebComponent {
 	private function initIframe($content) {
 		$this->initContent($content);
 
-		// Javascript code
+		// Javascript template code
 		$service = \Project\Service\Container::getInstance();
 		$js = new \Sy\Component();
 		$js->setTemplateFile(__DIR__ . '/Iframe.js');
@@ -113,12 +113,10 @@ class Content extends WebComponent {
 			'TRANSLATE_VALUE'  => $this->_('Translation value'),
 		]);
 
-		// Add javascript code
+		// Add javascript and css code
 		$this->addJsCode($js, ['position' => WebComponent::JS_TOP]);
 		$this->addJsLink(CKEDITOR_JS);
-
-		// Ckeditor hidden fields css
-		$this->addCssCode('[data-sycomponent] .cke_hidden {display: none;}');
+		$this->addCssCode(__DIR__ . '/Iframe.css');
 	}
 
 	/**
