@@ -1,0 +1,9 @@
+/* Hide CKEditor hidden fields */
+[data-sycomponent] .cke_hidden {
+	display: none;
+}
+
+/* Hide CKEditor warning message */
+.cke_notification_warning {
+	display: none;
+}
