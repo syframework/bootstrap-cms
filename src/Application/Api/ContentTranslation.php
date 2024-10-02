@@ -48,6 +48,7 @@ class ContentTranslation extends \Sy\Bootstrap\Component\Api {
 			// Update page
 			$key   = $this->post('key');
 			$value = $this->post('value');
+			$lang  = $this->post('lang');
 
 			if (is_null($key) or is_null($value)) {
 				return $this->requestError([
@@ -57,7 +58,6 @@ class ContentTranslation extends \Sy\Bootstrap\Component\Api {
 			}
 
 			// Save translation value
-			$lang = $service->lang->getLang();
 			$service->contentTranslation->change(['lang' => $lang, 'key' => $key, 'value' => $value], ['value' => $value]);
 			return $this->ok(['status' => 'ok']);
 		} catch (\Sy\Db\MySql\Exception $e) {
