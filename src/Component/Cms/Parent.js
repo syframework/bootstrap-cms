@@ -890,11 +890,6 @@ class UsersList extends EventTarget {
 		document.querySelectorAll('#sy-page-toolbar .btn-circle').forEach(btn => btn.removeAttribute('disabled'));
 	});
 
-	window.addEventListener('load', () => {
-		// Enable toolbar buttons
-		document.querySelectorAll('#sy-page-toolbar .btn-circle').forEach(btn => btn.removeAttribute('disabled'));
-	});
-
 	window.addEventListener('beforeunload', e => {
 		if (!codeChanged()) return;
 		if (formSubmit) return;
@@ -1187,5 +1182,10 @@ class UsersList extends EventTarget {
 		iframe.contentWindow.addEventListener('scroll', saveScrollPosition);
 	});
 	<!-- END CODE_BLOCK -->
+
+	window.addEventListener('load', () => {
+		// Enable toolbar buttons
+		document.querySelectorAll('#sy-page-toolbar .btn-circle').forEach(btn => btn.removeAttribute('disabled'));
+	});
 
 })();
