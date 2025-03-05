@@ -300,7 +300,7 @@
 
 	function startEdit() {
 		const location = new URL('{GET_URL}', window.location.origin);
-		location.searchParams.set('ts', new Date().getTime());
+		location.searchParams.set('ts', Date.now());
 
 		fetch(location.href)
 			.then(response => response.json())
@@ -436,7 +436,7 @@
 
 	setInterval(function () {
 		const location = new URL('{CSRF_URL}', window.location.origin);
-		location.searchParams.set('ts', new Date().getTime());
+		location.searchParams.set('ts', Date.now());
 
 		fetch(location.href).then(response => response.json()).then(data => {
 			csrf = data.csrf;
