@@ -16,9 +16,12 @@ return [
 	'Translation identifier' => 'Identifiant de la traduction',
 	'Translation value' => 'Valeur de la traduction',
 	'Private page' => 'Page privée',
-	'Secret page' => 'Page publique invisible aux moteurs',
+	'Secret page' => 'Page publique non indexée',
 	'Public page' => 'Page publique',
 	'Code not saved, are you sure to close?' => 'Code non enregistré, êtes-vous sûr de fermer ?',
 	'Connecting to peer' => 'Edition en mode collaboratif en cours de connexion...',
 	'Connected users' => 'Utilisateurs connectés',
+	'All pages' => 'Toutes les pages',
+	'No page' => 'Aucune page',
+	'No title' => 'Pas de titre',
 ];
