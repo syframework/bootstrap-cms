@@ -1,0 +1,15 @@
+<a href="{URL}" class="list-group-item list-group-item-action" data-id="{ID}">
+	<small class="text-body-tertiary float-end">
+		{"Updated at"}
+		<strong data-date="{TIMESTAMP}" data-date-format='{"year":"numeric","month":"long","day":"numeric","weekday":"long","hour":"numeric","minute":"numeric","second":"numeric"}'>{DATE_FULL}</strong>
+	</small>
+	<div>
+		<span class="badge rounded-pill text-bg-{COLOR} p-1 me-1" data-bs-title="{VISIBILITY}">
+			<span class="visually-hidden">{VISIBILITY}</span>
+		</span>
+		<strong>{TITLE}</strong>
+		<!-- BEGIN HOME_BLOCK -->
+		<span class="badge text-bg-primary ms-2">{"Home page"}</span>
+		<!-- END HOME_BLOCK -->
+	</div>
+</a>

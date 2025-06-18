@@ -1,16 +1,21 @@
 <?php
-namespace Sy\Bootstrap\Component\Cms\HistoryFeed;
+namespace Sy\Bootstrap\Component\Cms\PageFeed;
 
 class Page extends \Sy\Component\WebComponent {
 
-	private $datetime;
+	/**
+	 * Updated at
+	 *
+	 * @var string
+	 */
+	private $n;
 
-	private $contentId;
-
-	public function __construct($datetime, $contentId) {
+	/**
+	 * @param string|null $n
+	 */
+	public function __construct($n) {
 		parent::__construct();
-		$this->datetime = $datetime;
-		$this->contentId = $contentId;
+		$this->n = $n;
 
 		$this->mount(function () {
 			$this->init();
@@ -20,7 +25,7 @@ class Page extends \Sy\Component\WebComponent {
 	private function init() {
 		$this->setTemplateFile(__DIR__ . '/Page.html');
 
-		if (is_null($this->datetime)) {
+		if (is_null($this->n)) {
 			$item = new Item(null);
 			$this->mergeCss($item);
 			$this->mergeJs($item);
@@ -31,13 +36,17 @@ class Page extends \Sy\Component\WebComponent {
 
 		$service = \Project\Service\Container::getInstance();
 		try {
-			$versions = $service->contentHistory->retrieveContentVersions($this->contentId, $this->datetime);
+			$conditions = ['ORDER BY' => 'updated_at DESC', 'LIMIT' => 50];
+			if (!empty($this->n)) {
+				$conditions['WHERE'] = ['updated_at' => ['<' => $this->n]];
+			}
+			$pages = $service->content->retrieveAll($conditions);
 		} catch (\Sy\Db\MySql\Exception $e) {
-			$versions = [];
+			$pages = [];
 		}
 
-		foreach ($versions as $version) {
-			$item = new Item($version);
+		foreach ($pages as $page) {
+			$item = new Item($page);
 			$this->setVar('ITEM', $item);
 			$this->setBlock('ITEM_BLOCK');
 		}

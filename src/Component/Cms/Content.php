@@ -207,6 +207,13 @@ class Content extends WebComponent {
 			$this->setBlock('CREATE_MODAL_BLOCK');
 		}
 
+		// Read all pages
+		if ($user->hasPermission('content-read')) {
+			$this->setVar('PAGE_FEED', new PageFeed());
+			$this->setBlock('ALL_PAGES_MODAL_BLOCK');
+			$this->setBlock('READ_BTN_BLOCK');
+		}
+
 		// Update inline
 		if ($user->hasPermission('content-update-inline')) {
 			$js->setBlock('UPDATE_BLOCK');
