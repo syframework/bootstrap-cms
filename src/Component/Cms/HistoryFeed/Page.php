@@ -32,7 +32,7 @@ class Page extends \Sy\Component\WebComponent {
 		$service = \Project\Service\Container::getInstance();
 		try {
 			$versions = $service->contentHistory->retrieveContentVersions($this->contentId, $this->datetime);
-		} catch (\Sy\Bootstrap\Service\Crud\Exception $e) {
+		} catch (\Sy\Db\MySql\Exception $e) {
 			$versions = [];
 		}
 
