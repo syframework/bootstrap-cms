@@ -24,4 +24,5 @@ return [
 	'All pages' => 'Toutes les pages',
 	'No page' => 'Aucune page',
 	'No title' => 'Pas de titre',
+	'Home page' => 'Page d\'accueil',
 ];
