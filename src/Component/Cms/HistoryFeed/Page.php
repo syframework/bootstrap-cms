@@ -38,7 +38,7 @@ class Page extends \Sy\Component\WebComponent {
 
 		foreach ($versions as $version) {
 			$item = new Item($version);
-			$this->setComponent('ITEM', $item);
+			$this->setVar('ITEM', $item);
 			$this->setBlock('ITEM_BLOCK');
 		}
 	}
