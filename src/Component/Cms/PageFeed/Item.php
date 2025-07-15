@@ -30,7 +30,8 @@ class Item extends \Sy\Component\WebComponent {
 		];
 		$date = new \Sy\Bootstrap\Lib\Date($data['updated_at']);
 		$this->setVars([
-			'ID'          => $data['updated_at'],
+			'ALIAS'       => $data['alias'],
+			'UPDATED_AT'  => $data['updated_at'],
 			'TITLE'       => empty($data['title']) ? $this->_('No title') : Str::escape($data['title']),
 			'DESCRIPTION' => Str::escape($data['description']),
 			'TIMESTAMP'   => $date->timestamp(),
