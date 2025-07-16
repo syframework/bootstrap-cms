@@ -3,6 +3,11 @@ namespace Sy\Bootstrap\Application\Api;
 
 class ContentTranslation extends \Sy\Bootstrap\Component\Api {
 
+	public function __construct() {
+		parent::__construct();
+		$this->addTranslator(__DIR__ . '/../../../lang/bootstrap-cms');
+	}
+
 	public function security() {
 		$service = \Project\Service\Container::getInstance();
 		if (!$service->user->getCurrentUser()->hasPermission('content-update')) {
