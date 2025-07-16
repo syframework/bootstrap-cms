@@ -25,4 +25,8 @@ return [
 	'No page' => 'Aucune page',
 	'No title' => 'Pas de titre',
 	'Home page' => 'Page d\'accueil',
+	'Updated at' => 'Mis à jour le',
+	'Unauthorized character in the alias' => 'Caractères autorisés : lettres, chiffres et tiret',
+	'Alias already exists' => 'Alias déjà utilisé',
+	'Alias is available' => 'Alias disponible',
 ];

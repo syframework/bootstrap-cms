@@ -87,4 +87,26 @@ class Content extends \Sy\Bootstrap\Component\Api {
 		}
 	}
 
+	/**
+	 * Check if content page alias is valid
+	 */
+	public function validAction() {
+		$alias = $this->get('id');
+
+		// Check if alias contains invalid characters
+		if (preg_match('/[^a-z0-9\-]/', $alias)) {
+			return $this->ok([
+				'valid'   => false,
+				'message' => $this->_('Unauthorized character in the alias'),
+			]);
+		}
+
+		$service = \Project\Service\Container::getInstance();
+		$valid = $service->content->count(['alias' => $alias]);
+		return $this->ok([
+			'valid'   => ($valid === 0),
+			'message' => ($valid > 0) ? $this->_('Alias already exists') : $this->_('Alias is available'),
+		]);
+	}
+
 }

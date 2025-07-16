@@ -554,6 +554,51 @@ class UsersList extends EventTarget {
 }
 
 (function () {
+	<!-- BEGIN CREATE_BLOCK -->
+	const aliasInput = document.querySelector('#sy-new-page-modal form input[name="form[alias]"]');
+
+	if (aliasInput) {
+		let debounceTimeout;
+		aliasInput.addEventListener('input', e => {
+			const inputElement = e.target;
+			clearTimeout(debounceTimeout);
+
+			debounceTimeout = setTimeout(() => {
+				const alias = inputElement.value;
+				let feedbackElement = inputElement.nextElementSibling;
+
+				if (alias.length === 0) {
+					inputElement.classList.remove('is-valid', 'is-invalid');
+					if (feedbackElement && feedbackElement.matches('.valid-feedback, .invalid-feedback')) {
+						feedbackElement.remove();
+					}
+					return;
+				}
+
+				const validationUrl = new URL('{ALIAS_VALIDATION_URL}', window.location.origin);
+				validationUrl.searchParams.set('id', alias);
+
+				const setFeedback = (valid, message) => {
+					inputElement.classList.toggle('is-valid', valid);
+					inputElement.classList.toggle('is-invalid', !valid);
+
+					if (!feedbackElement || !feedbackElement.matches('.valid-feedback, .invalid-feedback')) {
+						feedbackElement = document.createElement('div');
+						inputElement.insertAdjacentElement('afterend', feedbackElement);
+					}
+					feedbackElement.className = valid ? 'valid-feedback' : 'invalid-feedback';
+					feedbackElement.textContent = message;
+				};
+
+				fetch(validationUrl)
+					.then(response => response.json())
+					.then(data => setFeedback(data.valid, data.message))
+					.catch(() => setFeedback(false, data.message));
+			}, 500);
+		});
+	}
+	<!-- END CREATE_BLOCK -->
+
 	<!-- BEGIN UPDATE_BLOCK -->
 	document.getElementById('sy-btn-page-update-start').addEventListener('click', function (e) {
 		e.preventDefault();
