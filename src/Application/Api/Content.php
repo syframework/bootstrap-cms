@@ -3,6 +3,11 @@ namespace Sy\Bootstrap\Application\Api;
 
 class Content extends \Sy\Bootstrap\Component\Api {
 
+	public function __construct() {
+		parent::__construct();
+		$this->addTranslator(__DIR__ . '/../../../lang/bootstrap-cms');
+	}
+
 	public function security() {
 		if (is_null($this->request('id'))) {
 			throw new \Sy\Bootstrap\Component\Api\RequestErrorException('Missing page content id');
