@@ -205,6 +205,8 @@ class Content extends WebComponent {
 			$this->setVar('NEW_PAGE_FORM', new Create());
 			$this->setBlock('CREATE_BTN_BLOCK');
 			$this->setBlock('CREATE_MODAL_BLOCK');
+			$js->setVar('ALIAS_VALIDATION_URL', Url::build('api', ['content', 'valid']));
+			$js->setBlock('CREATE_BLOCK');
 		}
 
 		// Read all pages
