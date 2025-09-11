@@ -8,6 +8,9 @@ use Sy\Component\WebComponent;
 
 class Content extends WebComponent {
 
+	private const CKEDITOR_JS = 'https://cdn.ckeditor.com/4.22.1/full-all/ckeditor.js';
+	private const CKEDITOR_ROOT = WEB_ROOT . '/assets/ckeditor';
+
 	/**
 	 * @var int
 	 */
@@ -101,7 +104,7 @@ class Content extends WebComponent {
 			'FILE_UPLOAD'      => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'file']),
 			'IMG_UPLOAD_AJAX'  => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'image', 'json' => '']),
 			'FILE_UPLOAD_AJAX' => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'file', 'json' => '']),
-			'CKEDITOR_ROOT'    => CKEDITOR_ROOT,
+			'CKEDITOR_ROOT'    => Content::CKEDITOR_ROOT,
 			'GET_URL'          => Url::build('api', 'content', ['id' => $this->id]),
 			'CSRF_URL'         => Url::build('api', 'csrf'),
 			'LANG'             => $service->lang->getLang(),
@@ -115,7 +118,7 @@ class Content extends WebComponent {
 
 		// Add javascript and css code
 		$this->addJsCode($js, ['position' => WebComponent::JS_TOP]);
-		$this->addJsLink(CKEDITOR_JS);
+		$this->addJsLink(Content::CKEDITOR_JS);
 		$this->addCssCode(__DIR__ . '/Iframe.css');
 	}
 
