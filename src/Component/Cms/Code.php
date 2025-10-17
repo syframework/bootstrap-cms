@@ -136,7 +136,7 @@ class Code extends \Sy\Bootstrap\Component\Form {
 			return $this->jsonSuccess('Source code updated successfully', ['redirection' => Url::build('page', 'content', ['id' => $this->id])]);
 		} catch (\Sy\Component\Html\Form\Exception $e) {
 			$this->logWarning($e);
-			return $this->jsonError('Please fill the form correctly');
+			return $this->jsonError($e->getMessage() ?? 'Please fill the form correctly');
 		} catch (\Sy\Db\MySql\Exception $e) {
 			if ($e->getCode() === 1644) {
 				return $this->jsonSuccess('No change detected', ['color' => 'info', 'redirection' => Url::build('page', 'content', ['id' => $this->id])]);
