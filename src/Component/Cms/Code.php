@@ -34,16 +34,6 @@ class Code extends \Sy\Bootstrap\Component\Form {
 
 		$this->addCsrfField();
 
-		// Load content
-		$service = \Project\Service\Container::getInstance();
-		$version = $this->get('version');
-
-		if (is_null($version)) {
-			$content = $service->content->retrieve(['id' => $this->id]);
-		} else {
-			$content = $service->contentHistory->retrieve(['id' => $this->id, 'crc32' => $version]);
-		}
-
 		// HTML
 		$htmlArea = new CodeArea();
 		$htmlArea->setAttributes([
@@ -72,10 +62,6 @@ class Code extends \Sy\Bootstrap\Component\Form {
 		$cssArea->setTheme('monokai');
 		$this->cssArea = $cssArea;
 
-		if (!empty($content)) {
-			$cssArea->addText(Str::escape($content['scss']));
-		}
-
 		$this->addDiv([
 			'class'           => 'tab-pane fade',
 			'id'              => 'sy-css-tab-content',
@@ -93,10 +79,6 @@ class Code extends \Sy\Bootstrap\Component\Form {
 		$jsArea->setMode('typescript');
 		$jsArea->setTheme('monokai');
 		$this->jsArea = $jsArea;
-
-		if (!empty($content)) {
-			$jsArea->addText(Str::escape($content['js']));
-		}
 
 		$this->addDiv([
 			'class'           => 'tab-pane fade',
