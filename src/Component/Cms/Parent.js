@@ -685,7 +685,7 @@ class UsersList extends EventTarget {
 
 		window.addEventListener("message", event => {
 			if (event.data === 'saved') {
-				loadHtml();
+				loadCode();
 			}
 		}, false);
 
@@ -820,7 +820,7 @@ class UsersList extends EventTarget {
 				document.getElementById('loader-connecting').classList.remove('visually-hidden');
 				return;
 			}
-			loadHtml();
+			loadCode();
 		});
 
 		node.addEventListener('close', e => {
@@ -878,21 +878,30 @@ class UsersList extends EventTarget {
 		});
 	}
 
-	function loadHtml() {
-		if (codeEditorHtml.getValue() !== '') return;
-
+	function loadCode() {
 		const location = new URL('{GET_URL}', window.location.origin);
 		location.searchParams.set('ts', Date.now());
 
 		fetch(location.href)
 			.then(response => response.json())
 			.then(res => {
-				if (res.status === 'ok') {
+				if (res.status !== 'ok') return;
+				if (codeEditorHtml.getValue() === '' && res.html !== '') {
 					codeEditorHtml.setValue(res.html);
 					codeEditorHtml.setYtext(res.html);
 					codeEditorHtml.getYundoManager().clear();
 					codeEditorHtml.loadEditorState();
 					document.getElementById('loader-backdrop').style.display = 'none';
+				}
+				if (codeEditorCss.getValue() === '' && res.scss !== '') {
+					codeEditorCss.setValue(res.scss);
+					codeEditorCss.setYtext(res.scss);
+					codeEditorCss.getYundoManager().clear();
+				}
+				if (codeEditorJs.getValue() === '' && res.js !== '') {
+					codeEditorJs.setValue(res.js);
+					codeEditorJs.setYtext(res.js);
+					codeEditorJs.getYundoManager().clear();
 				}
 			});
 	}
