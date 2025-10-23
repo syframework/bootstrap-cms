@@ -891,18 +891,20 @@ class UsersList extends EventTarget {
 					codeEditorHtml.setYtext(res.html);
 					codeEditorHtml.getYundoManager().clear();
 					codeEditorHtml.loadEditorState();
-					document.getElementById('loader-backdrop').style.display = 'none';
 				}
 				if (codeEditorCss.getValue() === '' && res.scss !== '') {
 					codeEditorCss.setValue(res.scss);
 					codeEditorCss.setYtext(res.scss);
 					codeEditorCss.getYundoManager().clear();
+					codeEditorCss.loadEditorState();
 				}
 				if (codeEditorJs.getValue() === '' && res.js !== '') {
 					codeEditorJs.setValue(res.js);
 					codeEditorJs.setYtext(res.js);
 					codeEditorJs.getYundoManager().clear();
+					codeEditorJs.loadEditorState();
 				}
+				document.getElementById('loader-backdrop').style.display = 'none';
 			});
 	}
 
