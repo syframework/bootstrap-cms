@@ -899,30 +899,28 @@ class UsersList extends EventTarget {
 	}
 
 	function loadCode() {
+		if (codeEditorHtml.changed() || codeEditorCss.changed() || codeEditorJs.changed()) return;
+
 		const location = new URL('{GET_URL}', window.location.origin);
 		location.searchParams.set('ts', Date.now());
 
 		fetch(location.href)
 			.then(response => response.json())
 			.then(res => {
-				// console.debug('Code loaded', res);
 				if (res.status !== 'ok') return;
 				if (codeEditorHtml.getValue() === '' && res.html !== '') {
-					console.debug('Load HTML code');
 					codeEditorHtml.setValue(res.html);
 					codeEditorHtml.setYtext(res.html);
 					codeEditorHtml.getYundoManager().clear();
 					codeEditorHtml.loadEditorState();
 				}
 				if (codeEditorCss.getValue() === '' && res.scss !== '') {
-					console.debug('Load SCSS code');
 					codeEditorCss.setValue(res.scss);
 					codeEditorCss.setYtext(res.scss);
 					codeEditorCss.getYundoManager().clear();
 					codeEditorCss.loadEditorState();
 				}
 				if (codeEditorJs.getValue() === '' && res.js !== '') {
-					console.debug('Load JS code');
 					codeEditorJs.setValue(res.js);
 					codeEditorJs.setYtext(res.js);
 					codeEditorJs.getYundoManager().clear();
