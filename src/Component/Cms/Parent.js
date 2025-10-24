@@ -228,9 +228,9 @@ class LiveEditor {
 			const ytext = this.#ydoc.getText(this.id);
 			const start = this.#editor.session.doc.positionToIndex(delta.start, 0);
 			if (delta.action === 'insert') {
-				ytext.insert(start, delta.lines.join('\n'));
+				ytext.insert(start, delta.lines.join(this.#editor.session.doc.getNewLineCharacter()));
 			} else if (delta.action === 'remove') {
-				const length = delta.lines.join('\n').length;
+				const length = delta.lines.join(this.#editor.session.doc.getNewLineCharacter()).length;
 				ytext.delete(start, length);
 			}
 
@@ -310,8 +310,28 @@ class LiveEditor {
 
 	setYdoc(ydoc) {
 		this.#ydoc = ydoc;
-		this.#ydoc.getText(this.id).observe(() => {
-			this.setValue(this.#ydoc.getText(this.id).toString());
+		this.#ydoc.getText(this.id).observe(event => {
+			if (this.#lock) return;
+			this.#lock = true;
+
+			const deltas = event.delta;
+			let index = 0;
+
+			deltas.forEach(delta => {
+				if (delta.retain) {
+					index += delta.retain;
+				} else if (delta.insert) {
+					const pos = this.#editor.session.doc.indexToPosition(index, 0);
+					this.#editor.session.insert(pos, delta.insert);
+					index += delta.insert.length;
+				} else if (delta.delete) {
+					const start = this.#editor.session.doc.indexToPosition(index, 0);
+					const end = this.#editor.session.doc.indexToPosition(index + delta.delete, 0);
+					this.#editor.session.remove(new ace.Range(start.row, start.column, end.row, end.column));
+				}
+			});
+
+			this.#lock = false;
 		});
 	}
 
@@ -885,20 +905,24 @@ class UsersList extends EventTarget {
 		fetch(location.href)
 			.then(response => response.json())
 			.then(res => {
+				// console.debug('Code loaded', res);
 				if (res.status !== 'ok') return;
 				if (codeEditorHtml.getValue() === '' && res.html !== '') {
+					console.debug('Load HTML code');
 					codeEditorHtml.setValue(res.html);
 					codeEditorHtml.setYtext(res.html);
 					codeEditorHtml.getYundoManager().clear();
 					codeEditorHtml.loadEditorState();
 				}
 				if (codeEditorCss.getValue() === '' && res.scss !== '') {
+					console.debug('Load SCSS code');
 					codeEditorCss.setValue(res.scss);
 					codeEditorCss.setYtext(res.scss);
 					codeEditorCss.getYundoManager().clear();
 					codeEditorCss.loadEditorState();
 				}
 				if (codeEditorJs.getValue() === '' && res.js !== '') {
+					console.debug('Load JS code');
 					codeEditorJs.setValue(res.js);
 					codeEditorJs.setYtext(res.js);
 					codeEditorJs.getYundoManager().clear();
