@@ -267,6 +267,14 @@ class LiveEditor {
 			this.#changeCursorCallbacks.forEach(f => f(position));
 		});
 
+		this.#editor.commands.addCommand({
+			name: 'save',
+			bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
+			exec: function() {
+				document.querySelector('#sy-code-modal form').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+			}
+		});
+
 		const value = this.getValue();
 		if (value) {
 			this.setYtext(value);
