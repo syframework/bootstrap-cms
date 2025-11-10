@@ -159,13 +159,6 @@ class Content extends WebComponent {
 			$this->setBlock('HISTORY_MODAL_BLOCK', ['HISTORY_LIST' => new HistoryFeed($this->id)]);
 		}
 
-		// Duplicate
-		if ($user->hasPermission('content-create')) {
-			$this->setVar('DUPLICATE_PAGE_FORM', new Create($content['html'], $content['scss'], $content['css'], $content['js']));
-			$this->setBlock('DUPLICATE_BTN_BLOCK');
-			$this->setBlock('DUPLICATE_MODAL_BLOCK');
-		}
-
 		// Javascript code
 		$js = new \Sy\Component();
 		$js->setTemplateFile(__DIR__ . '/Parent.js');
@@ -203,8 +196,11 @@ class Content extends WebComponent {
 			return;
 		}
 
-		// Create
+		// Create and duplicate
 		if ($user->hasPermission('content-create')) {
+			$this->setVar('DUPLICATE_PAGE_FORM', new Create($content['html'], $content['scss'], $content['css'], $content['js']));
+			$this->setBlock('DUPLICATE_BTN_BLOCK');
+			$this->setBlock('DUPLICATE_MODAL_BLOCK');
 			$this->setVar('NEW_PAGE_FORM', new Create());
 			$this->setBlock('CREATE_BTN_BLOCK');
 			$this->setBlock('CREATE_MODAL_BLOCK');
