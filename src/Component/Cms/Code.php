@@ -125,9 +125,9 @@ class Code extends \Sy\Bootstrap\Component\Form {
 			}
 			$this->logWarning($e);
 			return $this->jsonError('Database error');
-		} catch (\ScssPhp\ScssPhp\Exception\ParserException $e) {
+		} catch (\ScssPhp\ScssPhp\Exception\SassException $e) {
 			$this->logWarning($e);
-			return $this->jsonError('SCSS ' . $e->getMessage());
+			return $this->jsonError('SCSS Error - ' . $e->getMessage());
 		}
 	}
 
@@ -136,9 +136,19 @@ class Code extends \Sy\Bootstrap\Component\Form {
 	 * @return string
 	 */
 	public static function checkHtml($html) {
+		// Temporarily replace vuejs attributes with valid data-* attributes
+		$html = preg_replace('/ @([a-zA-Z0-9\-_]+)=/', ' data-v-on-$1=', $html);
+		$html = preg_replace('/ :([a-zA-Z0-9\-_]+)=/', ' data-v-bind-$1=', $html);
+
 		$html5 = new HTML5();
 		$dom = $html5->loadHTMLFragment($html);
-		return $html5->saveHTML($dom);
+		$savedHtml = $html5->saveHTML($dom);
+
+		// Restore vuejs attributes
+		$savedHtml = preg_replace('/ data-v-on-([a-zA-Z0-9\-_]+)=/', ' @$1=', $savedHtml);
+		$savedHtml = preg_replace('/ data-v-bind-([a-zA-Z0-9\-_]+)=/', ' :$1=', $savedHtml);
+
+		return $savedHtml;
 	}
 
 	/**
