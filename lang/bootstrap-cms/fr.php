@@ -29,4 +29,8 @@ return [
 	'Unauthorized character in the alias' => 'Caractères autorisés : lettres minuscules sans accent, chiffres et tiret',
 	'Alias already exists' => 'Alias déjà utilisé',
 	'Alias is available' => 'Alias disponible',
+	'Current version' => 'Version actuelle',
+	'Version from' => 'Version du',
+	'Compare with the current version' => 'Comparer avec la version actuelle',
+	'Hide the current version' => 'Masquer la version actuelle',
 ];

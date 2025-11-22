@@ -191,7 +191,16 @@ class Content extends WebComponent {
 				$this->setBlock('RESTORE_BTN_BLOCK', ['RESTORE_URL' => Url::build('content', 'restore', ['id' => $this->id, 'version' => $version])]);
 			}
 
+			// Compare with the current version button
+			$this->setBlock('COMPARE_BTN_BLOCK');
+			$this->setBlock('COMPARE_BLOCK', [
+				'IFRAME_CURRENT_URL' => Url::build('page', 'content', ['id' => $this->id, 'mode' => 'iframe']),
+				'VERSION_DATE'       => $content['updated_at'],
+				'LOCALE'             => $service->lang->getLang(),
+			]);
+
 			// Add javascript code
+			$js->setBlock('COMPARE_BLOCK');
 			$this->addJsCode($js, ['position' => WebComponent::JS_TOP]);
 			return;
 		}
