@@ -1271,6 +1271,59 @@ class UsersList extends EventTarget {
 	});
 	<!-- END CODE_BLOCK -->
 
+	<!-- BEGIN COMPARE_BLOCK -->
+	document.getElementById('sy-btn-page-compare-start').addEventListener('click', function (e) {
+		e.preventDefault();
+
+		// Switch compare button
+		document.getElementById('sy-btn-page-compare-start').classList.add("d-none");
+		document.getElementById('sy-btn-page-compare-stop').classList.remove("d-none");
+
+		// Change previous version iframe width
+		const frame = document.getElementById('sy-content-iframe');
+		frame.style.width = '50vw';
+		frame.style.left = '50vw';
+
+		// Create current version iframe
+		let currentFrame = document.getElementById('sy-content-iframe-current');
+		if (currentFrame) currentFrame.style.display = 'block';
+
+		// Show and position badges
+		const badgeCurrent = document.getElementById('sy-badge-current');
+		badgeCurrent.style.display = 'block';
+
+		const badgeVersion = document.getElementById('sy-badge-version');
+		badgeVersion.style.display = 'block';
+
+		const dateSpan = badgeVersion.querySelector('.version-date');
+		if (!dateSpan || dateSpan.textContent.trim() !== '') return;
+		const date = luxon.DateTime.fromSQL(badgeVersion.dataset.versionDate, { zone: 'utc' });
+		const formattedDate = date.setZone(luxon.DateTime.local().zoneName).setLocale(badgeVersion.dataset.locale).toLocaleString(luxon.DateTime.DATETIME_SHORT);
+		dateSpan.textContent = formattedDate;
+	});
+
+	document.getElementById('sy-btn-page-compare-stop').addEventListener('click', function (e) {
+		e.preventDefault();
+
+		// Switch compare button
+		document.getElementById('sy-btn-page-compare-start').classList.remove("d-none");
+		document.getElementById('sy-btn-page-compare-stop').classList.add("d-none");
+
+		// Change iframe width
+		const frame = document.getElementById('sy-content-iframe');
+		frame.style.width = '100vw';
+		frame.style.left = '0';
+
+		// Remove current version iframe
+		const currentFrame = document.getElementById('sy-content-iframe-current');
+		if (currentFrame) currentFrame.style.display = 'none';
+
+		// Hide badges
+		document.getElementById('sy-badge-current').style.display = 'none';
+		document.getElementById('sy-badge-version').style.display = 'none';
+	});
+	<!-- END COMPARE_BLOCK -->
+
 	window.addEventListener('load', () => {
 		// Enable toolbar buttons
 		document.querySelectorAll('#sy-page-toolbar .btn-circle').forEach(btn => btn.removeAttribute('disabled'));
