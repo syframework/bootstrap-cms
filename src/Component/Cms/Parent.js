@@ -662,9 +662,7 @@ class UsersList extends EventTarget {
 	<!-- BEGIN DELETE_BLOCK -->
 	document.getElementById('sy-btn-page-delete').addEventListener('click', function (e) {
 		e.preventDefault();
-		if (confirm((new DOMParser).parseFromString('{CONFIRM_DELETE}', 'text/html').documentElement.textContent)) {
-			document.getElementById('{DELETE_FORM_ID}').submit();
-		}
+		document.getElementById('{DELETE_FORM_ID}').requestSubmit();
 	});
 	<!-- END DELETE_BLOCK -->
 

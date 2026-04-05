@@ -241,10 +241,11 @@ class Content extends WebComponent {
 		if ($user->hasPermission('content-delete') and $this->id > 1) {
 			$deleteForm = new \Sy\Bootstrap\Component\Form\Crud\Delete('content', ['id' => $this->id]);
 			$deleteForm->setAttribute('id', 'delete-' . $this->id);
+			$deleteForm->setOption('redirection', Url::build('page', 'content', ['id' => 1]));
+			$deleteForm->setOption('confirm', $this->_('Are you sure to delete this page?'));
 			$this->setComponent('DELETE_PAGE_FORM', $deleteForm);
 			$this->setBlock('DELETE_BTN_BLOCK');
 			$js->setVars([
-				'CONFIRM_DELETE' => Str::escape($this->_('Are you sure to delete this page?')),
 				'DELETE_FORM_ID' => 'delete-' . $this->id,
 			]);
 			$js->setBlock('DELETE_BLOCK');
