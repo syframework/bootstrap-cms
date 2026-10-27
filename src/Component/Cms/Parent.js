@@ -949,9 +949,16 @@ class UsersList extends EventTarget {
 	document.getElementById('sy-code-modal').addEventListener('show.bs.modal', () => init(), {once: true});
 
 	document.getElementById('sy-code-modal').addEventListener('show.bs.modal', () => {
-		screenSplit(window.localStorage.getItem('screen-split-layout'));
+		// Stop compare mode if active
+		const compareStopButton = document.getElementById('sy-btn-page-compare-stop');
+		if (compareStopButton && !compareStopButton.classList.contains('d-none')) {
+			compareStopButton.click();
+		}
+
 		// Disable toolbar buttons
 		document.querySelectorAll('#sy-page-toolbar .btn-circle').forEach(btn => btn.setAttribute('disabled', 'disabled'));
+
+		screenSplit(window.localStorage.getItem('screen-split-layout'));
 	});
 
 	document.getElementById('sy-code-modal').addEventListener('shown.bs.modal', () => {
@@ -1046,6 +1053,7 @@ class UsersList extends EventTarget {
 
 		const iframe = document.getElementById('sy-content-iframe');
 		iframe.style.top = '0';
+		iframe.style.left = '0';
 		iframe.style.width = '100vw';
 		iframe.style.height = '100vh';
 
@@ -1303,18 +1311,16 @@ class UsersList extends EventTarget {
 	document.getElementById('sy-btn-page-compare-stop').addEventListener('click', function (e) {
 		e.preventDefault();
 
+		screenSplitReset();
+
 		// Switch compare button
 		document.getElementById('sy-btn-page-compare-start').classList.remove("d-none");
 		document.getElementById('sy-btn-page-compare-stop').classList.add("d-none");
 
-		// Change iframe width
-		const frame = document.getElementById('sy-content-iframe');
-		frame.style.width = '100vw';
-		frame.style.left = '0';
-
 		// Remove current version iframe
 		const currentFrame = document.getElementById('sy-content-iframe-current');
-		if (currentFrame) currentFrame.style.display = 'none';
+		if (!currentFrame) return;
+		currentFrame.style.display = 'none';
 
 		// Hide badges
 		document.getElementById('sy-badge-current').style.display = 'none';
