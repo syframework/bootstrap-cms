@@ -75,6 +75,10 @@ class Application extends \Sy\Bootstrap\Application {
 }
 ```
 
+Converters are evaluated in registration order. `ContentConverter` uses an empty prefix by default, so it checks every root-level path against the content aliases: it must be registered after more specific converters and **before** `ControllerActionConverter`, which is the terminal fallback. A content is then reachable as `/<alias>` or `/<lang>/<alias>` and is mapped to `p=page`, `a=content`, `id=<id>`.
+
+See the [URL Converters](https://github.com/syframework/bootstrap/wiki/URL-Converters) wiki page for the full converter contract, ordering rules and `Url::build()` examples.
+
 ## Add the content pages sitemap in Sitemap.php
 
 In ```protected/src/Application/Sitemap.php```
