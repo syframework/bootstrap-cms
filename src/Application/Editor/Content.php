@@ -1,8 +1,6 @@
 <?php
 namespace Sy\Bootstrap\Application\Editor;
 
-use Sy\Bootstrap\Wysiwyg\Application\Editor\CkFile;
-
 class Content extends \Sy\Bootstrap\Component\Api {
 
 	use CkFile;
