@@ -3,11 +3,12 @@
 	"description": "Plugin for adding CMS feature",
 	"type": "library",
 	"require": {
-		"php": ">=8.0",
+		"php": ">=8.1",
 		"ext-json": "*",
 		"ext-dom": "*",
 		"sy/webcomponent": "^2",
-		"sy/bootstrap": "^1.0",
+		"sy/bootstrap": "^2.0",
+		"sy/bootstrap-wysiwyg": "^1.0",
 		"scssphp/scssphp": "*",
 		"masterminds/html5": "^2.8"
 	},
