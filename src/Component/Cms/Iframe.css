@@ -7,3 +7,16 @@
 .cke_notification_warning {
 	display: none;
 }
+
+/* CKEditor sharedspace targets (owned by the CMS iframe view) */
+#sy-page-topbar {
+	position: fixed;
+	top: 10px;
+	right: 0;
+	z-index: 2000;
+}
+#sy-page-bottombar {
+	position: fixed;
+	bottom: 0;
+	z-index: 2000;
+}

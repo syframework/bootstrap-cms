@@ -115,6 +115,10 @@ class EditorConfigTest extends TestCase {
 		// The sharedspace targets are the CMS responsibility, not bootstrap.
 		$this->assertStringContainsString('<div id="sy-page-topbar"></div>', $template);
 		$this->assertStringContainsString('<div id="sy-page-bottombar"></div>', $template);
+
+		$css = file_get_contents(__DIR__ . '/../../../src/Component/Cms/Iframe.css');
+		$this->assertStringContainsString('#sy-page-topbar', $css);
+		$this->assertStringContainsString('#sy-page-bottombar', $css);
 	}
 
 	public function testNoTemplates() {
