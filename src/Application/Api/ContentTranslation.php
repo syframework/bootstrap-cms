@@ -62,6 +62,12 @@ class ContentTranslation extends \Sy\Bootstrap\Component\Api {
 				]);
 			}
 
+			// `t_content_translation.lang` is a NOT NULL varchar(3): a client that
+			// sends nothing (or garbage) must not reach the upsert with NULL.
+			if (!is_string($lang) or preg_match('/^[a-z]{2,3}$/', $lang) !== 1) {
+				$lang = $service->lang->getLang();
+			}
+
 			// Save translation value
 			$service->contentTranslation->change(['lang' => $lang, 'key' => $key, 'value' => $value], ['value' => $value]);
 			return $this->ok(['status' => 'ok']);
