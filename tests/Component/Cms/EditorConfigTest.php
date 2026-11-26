@@ -109,6 +109,14 @@ class EditorConfigTest extends TestCase {
 		$this->assertSame('Clé', $config['translate-labels']['key']);
 	}
 
+	public function testSharedSpaceTargetsLiveInTheIframeTemplate() {
+		$template = file_get_contents(__DIR__ . '/../../../src/Component/Cms/Content.html');
+
+		// The sharedspace targets are the CMS responsibility, not bootstrap.
+		$this->assertStringContainsString('<div id="sy-page-topbar"></div>', $template);
+		$this->assertStringContainsString('<div id="sy-page-bottombar"></div>', $template);
+	}
+
 	public function testNoTemplates() {
 		$config = $this->build();
 
