@@ -97,3 +97,7 @@ class Sitemap extends \Sy\Bootstrap\Application\Sitemap {
 
 }
 ```
+
+`Content` adds one entry to the sitemap index (`<project>/sitemap/content`) and lists every content whose `visibility` is `public`: `<lastmod>` is its `updated_at` date, and every language declared in `LANGS` gets its own URL plus an `<alternate>` set. With a single language in `LANGS`, the URL keeps `lang=none`.
+
+The provider must be registered: `Sitemap` resolves the requested action to `Project\Application\Sitemap\<Action>` then `Sy\Bootstrap\Application\Sitemap\<Action>`, and answers 404 when no provider class matches the action or when that class was never added with `addProvider()`. An unregistered Content sitemap is therefore a 404, not an empty file; leaving it out of `Sitemap.php` also keeps the content URLs out of the sitemap index.
