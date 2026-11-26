@@ -1,6 +1,8 @@
 <?php
 namespace Sy\Bootstrap\Application\Api;
 
+use Sy\Bootstrap\Lib\HtmlSanitizer;
+
 class Content extends \Sy\Bootstrap\Component\Api {
 
 	public function __construct() {
@@ -78,8 +80,19 @@ class Content extends \Sy\Bootstrap\Component\Api {
 				]);
 			}
 
-			// Save new html
-			$service->content->update(['id' => $id], ['html' => $html, 'updator_id' => $service->user->getCurrentUser()->id]);
+			// Save new html: sanitized on write, except for the source editor
+			// (`content-code`), whose whole purpose is raw HTML (D24).
+			$user = $service->user->getCurrentUser();
+			if (!$user->hasPermission('content-code')) {
+				try {
+					$html = HtmlSanitizer::sanitize($html);
+				} catch (\LengthException $e) {
+					return $this->response(413, ['status' => 'ko', 'message' => 'Content too large']);
+				} catch (\InvalidArgumentException $e) {
+					return $this->requestError(['status' => 'ko', 'message' => 'Content is not valid UTF-8']);
+				}
+			}
+			$service->content->update(['id' => $id], ['html' => $html, 'updator_id' => $user->id]);
 			return $this->ok(['status' => 'ok']);
 		} catch (\Sy\Db\MySql\Exception $e) {
 			$this->logError($e);

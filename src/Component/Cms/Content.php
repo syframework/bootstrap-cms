@@ -4,12 +4,13 @@ namespace Sy\Bootstrap\Component\Cms;
 use Sy\Bootstrap\Lib\Url;
 use Sy\Bootstrap\Lib\HeadData;
 use Sy\Bootstrap\Lib\Str;
+use Sy\Bootstrap\Wysiwyg\Editor;
+use Sy\Bootstrap\Wysiwyg\Lib\ComponentFilter;
+use Sy\Bootstrap\Wysiwyg\Lib\EditorAssets;
+use Sy\Bootstrap\Wysiwyg\Lib\SlotMarker;
 use Sy\Component\WebComponent;
 
 class Content extends WebComponent {
-
-	private const CKEDITOR_JS = 'https://cdn.ckeditor.com/4.22.1/full-all/ckeditor.js';
-	private const CKEDITOR_ROOT = WEB_ROOT . '/assets/ckeditor';
 
 	/**
 	 * @var int
@@ -88,37 +89,51 @@ class Content extends WebComponent {
 	 * @param array $content
 	 */
 	private function initIframe($content) {
-		$this->initContent($content);
+		$this->initContent($content, true);
 
-		// Javascript template code
 		$service = \Project\Service\Container::getInstance();
+		$lang = $service->lang->getLang();
+		$allowlist = ComponentFilter::allowlist('content', EditorConfig::COMPONENT_ALLOWLIST);
+
+		// The iframe adapter loads the source itself: no `load-url` (D7).
+		$editorOptions = EditorConfig::build(
+			$this->id,
+			$lang,
+			$service->user->getCsrfToken(),
+			[
+				'save'         => Url::build('api', 'content'),
+				'csrf'         => Url::build('api', 'csrf'),
+				'image_browse' => Url::build('editor', 'content/browse', ['id' => $this->id, 'type' => 'image']),
+				'image_upload' => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'image']),
+				'file_browse'  => Url::build('editor', 'content/browse', ['id' => $this->id, 'type' => 'file']),
+				'file_upload'  => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'file']),
+				'translate'    => Url::build('api', 'content-translation'),
+			],
+			[
+				'engine'       => EditorAssets::engine(),
+				'ckeditorJs'   => EditorAssets::js(),
+				'ckeditorRoot' => EditorAssets::root(),
+				'plugins'      => EditorAssets::plugins(),
+			],
+			$allowlist,
+			$this->translations,
+			[
+				'language' => $this->_('In english'),
+				'key'      => $this->_('Translation identifier'),
+				'value'    => $this->_('Translation value'),
+				'add'      => $this->_('Add new translation slot'),
+			]
+		);
+		// `container => false`: `#sy-content` stays in Content.html.
+		$this->setComponent('WYSIWYG_EDITOR', new Editor($editorOptions));
+
+		// Iframe adapter
 		$js = new \Sy\Component();
 		$js->setTemplateFile(__DIR__ . '/Iframe.js');
 		$js->setVars([
-			'ID'               => $content['id'],
-			'CSRF'             => $service->user->getCsrfToken(),
-			'URL'              => Url::build('api', 'content'),
-			'IMG_BROWSE'       => Url::build('editor', 'content/browse', ['id' => $this->id, 'type' => 'image']),
-			'IMG_UPLOAD'       => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'image']),
-			'FILE_BROWSE'      => Url::build('editor', 'content/browse', ['id' => $this->id, 'type' => 'file']),
-			'FILE_UPLOAD'      => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'file']),
-			'IMG_UPLOAD_AJAX'  => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'image', 'json' => '']),
-			'FILE_UPLOAD_AJAX' => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'file', 'json' => '']),
-			'CKEDITOR_ROOT'    => Content::CKEDITOR_ROOT,
-			'GET_URL'          => Url::build('api', 'content', ['id' => $this->id]),
-			'CSRF_URL'         => Url::build('api', 'csrf'),
-			'LANG'             => $service->lang->getLang(),
-			'TRANSLATE_URL'    => Url::build('api', 'content-translation'),
-			'TRANSLATIONS'     => json_encode($this->translations),
-			'LANGUAGE'         => $this->_('In english'),
-			'ADD_TRANSLATE'    => $this->_('Add new translation slot'),
-			'TRANSLATE_KEY'    => $this->_('Translation identifier'),
-			'TRANSLATE_VALUE'  => $this->_('Translation value'),
+			'GET_URL' => Url::build('api', 'content', ['id' => $this->id]),
 		]);
-
-		// Add javascript and css code
 		$this->addJsCode($js, ['position' => WebComponent::JS_TOP]);
-		$this->addJsLink(Content::CKEDITOR_JS);
 		$this->addCssCode(__DIR__ . '/Iframe.css');
 	}
 
@@ -260,10 +275,15 @@ class Content extends WebComponent {
 	 *
 	 * @param array $content
 	 */
-	private function initContent($content) {
+	private function initContent($content, $editMode = false) {
+		$allowlist = ComponentFilter::allowlist('content', EditorConfig::COMPONENT_ALLOWLIST);
+		// Empty allowlist disables the filter instead of neutralizing every
+		// stored component: the CMS content is data-driven.
+		$source = $allowlist === [] ? $content['html'] : ComponentFilter::sanitize($content['html'], $allowlist);
+
 		$html = new WebComponent();
 		$html->addTranslator(LANG_DIR);
-		$html->setTemplateContent($content['html']);
+		$html->setTemplateContent($source);
 
 		// Load content translations
 		foreach ($this->translations as $key => $value) {
@@ -271,8 +291,11 @@ class Content extends WebComponent {
 		}
 
 		// Add web components in content
-		$this->initComponents($html, $content['html']);
-		$this->setVar('HTML', Str::convertTemplateSlot(strval($html)));
+		$this->initComponents($html, $source);
+		$rendered = Str::convertTemplateSlot(strval($html));
+		// Edit mode only: the adapter correlates rendered components by slot id.
+		if ($editMode) $rendered = SlotMarker::mark($rendered);
+		$this->setVar('HTML', $rendered);
 		$this->mergeCss($html);
 		$this->mergeJs($html);
 
