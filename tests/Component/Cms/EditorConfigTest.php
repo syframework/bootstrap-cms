@@ -100,6 +100,32 @@ class EditorConfigTest extends TestCase {
 		$this->assertSame([], $config['components']['allowlist']);
 	}
 
+	public function testComponentPreviewUsesTheRenderEndpoint() {
+		$allowlist = ['Project\\Component\\Map'];
+
+		// Without a render URL the widget keeps its "save to render" mask.
+		$config = $this->build(['allowlist' => $allowlist]);
+		$this->assertSame($allowlist, $config['components']['allowlist']);
+		$this->assertNull($config['components']['render-url']);
+
+		// With one, the widget posts `component` + `args` after an insertion or
+		// an edit; the endpoint is shared through Editor\Render (wysiwyg 1.9).
+		$config = $this->build([
+			'allowlist' => $allowlist,
+			'urls'      => [
+				'save'         => '/api/content',
+				'csrf'         => '/api/csrf',
+				'image_browse' => '/editor/content/browse?type=image',
+				'image_upload' => '/editor/content/upload?type=image',
+				'file_browse'  => '/editor/content/browse?type=file',
+				'file_upload'  => '/editor/content/upload?type=file',
+				'translate'    => '/api/content-translation',
+				'render'       => '/editor/content/render?id=7',
+			],
+		]);
+		$this->assertSame('/editor/content/render?id=7', $config['components']['render-url']);
+	}
+
 	public function testTranslationOptions() {
 		$config = $this->build();
 
