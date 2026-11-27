@@ -128,6 +128,7 @@ class EditorConfigTest extends TestCase {
 		// wysiwyg 1.10: the catalogue is fetched from the endpoint, so the
 		// editor does not embed `components.metadata` any more.
 		$this->assertSame('/editor/content/metadata?id=7', $config['components']['metadata-url']);
+		$this->assertFalse($config['components']['strict']);
 		$this->assertArrayNotHasKey('metadata', $config['components']);
 	}
 
