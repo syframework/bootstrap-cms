@@ -109,6 +109,7 @@ class Content extends WebComponent {
 				'file_upload'  => Url::build('editor', 'content/upload', ['id' => $this->id, 'type' => 'file']),
 				'translate'    => Url::build('api', 'content-translation'),
 				'render'       => Url::build('editor', 'content/render', ['id' => $this->id]),
+				'metadata'     => Url::build('editor', 'content/metadata', ['id' => $this->id]),
 			],
 			[
 				'engine'       => EditorAssets::engine(),

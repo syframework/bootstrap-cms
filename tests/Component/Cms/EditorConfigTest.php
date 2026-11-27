@@ -121,9 +121,14 @@ class EditorConfigTest extends TestCase {
 				'file_upload'  => '/editor/content/upload?type=file',
 				'translate'    => '/api/content-translation',
 				'render'       => '/editor/content/render?id=7',
+				'metadata'     => '/editor/content/metadata?id=7',
 			],
 		]);
 		$this->assertSame('/editor/content/render?id=7', $config['components']['render-url']);
+		// wysiwyg 1.10: the catalogue is fetched from the endpoint, so the
+		// editor does not embed `components.metadata` any more.
+		$this->assertSame('/editor/content/metadata?id=7', $config['components']['metadata-url']);
+		$this->assertArrayNotHasKey('metadata', $config['components']);
 	}
 
 	public function testTranslationOptions() {

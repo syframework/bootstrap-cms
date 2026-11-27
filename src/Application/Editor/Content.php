@@ -5,6 +5,7 @@ class Content extends \Sy\Bootstrap\Component\Api {
 
 	use CkFile;
 	use Render;
+	use Metadata;
 
 	public function security() {
 		if (is_null($this->request('id'))) {

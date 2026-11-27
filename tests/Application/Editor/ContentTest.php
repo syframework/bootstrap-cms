@@ -6,7 +6,8 @@ use Sy\Bootstrap\Application\Editor\Content;
 
 /**
  * The browser endpoints of the CMS editor: browse/upload come from `CkFile`,
- * the component preview from the shared `Render` trait (wysiwyg 1.9).
+ * the component preview from the shared `Render` trait (wysiwyg 1.9) and the
+ * component catalogue from `Metadata` (wysiwyg 1.10).
  */
 class ContentTest extends TestCase {
 
@@ -16,6 +17,8 @@ class ContentTest extends TestCase {
 		$this->assertContains('Sy\Bootstrap\Application\Editor\CkFile', $reflection->getTraitNames());
 		$this->assertContains('Sy\Bootstrap\Application\Editor\Render', $reflection->getTraitNames());
 		$this->assertTrue($reflection->hasMethod('renderAction'));
+		$this->assertContains('Sy\Bootstrap\Application\Editor\Metadata', $reflection->getTraitNames());
+		$this->assertTrue($reflection->hasMethod('metadataAction'));
 	}
 
 	public function testRenderActionComesFromTheEngine() {

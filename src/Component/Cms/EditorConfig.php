@@ -36,7 +36,7 @@ class EditorConfig {
 	 * @param int|string  $id
 	 * @param string      $lang            Content language
 	 * @param string      $csrf
-	 * @param array       $urls            save, csrf, image_browse, image_upload, file_browse, file_upload, translate, render
+	 * @param array       $urls            save, csrf, image_browse, image_upload, file_browse, file_upload, translate, render, metadata
 	 * @param array       $assets          engine, ckeditorJs, ckeditorRoot, plugins
 	 * @param array       $componentAllowlist
 	 * @param array       $translations    key => value map for the sytranslate widget
@@ -93,10 +93,12 @@ class EditorConfig {
 			'extra-plugins'   => $extraPlugins,
 			'remove-plugins'  => ['about', 'exportpdf'],
 			'components'      => [
-				'enabled'    => $componentAllowlist !== [],
-				'allowlist'  => $componentAllowlist,
-				// Preview endpoint shared by the consumers (`Editor\Content`).
-				'render-url' => $urls['render'] ?? null,
+				'enabled'      => $componentAllowlist !== [],
+				'allowlist'    => $componentAllowlist,
+				// Preview and catalogue endpoints shared by the consumers
+				// (`Editor\Content`).
+				'render-url'   => $urls['render'] ?? null,
+				'metadata-url' => $urls['metadata'] ?? null,
 			],
 			'translations'    => $translations,
 			'translate-url'   => $urls['translate'] ?? null,
